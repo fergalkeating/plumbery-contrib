@@ -57,6 +57,8 @@ by browsing [the FreeBSD page at osboxes](http://www.osboxes.org/freebsd/).
 
 The name and password can be put in the console access to the node, as expected.
 
+![menu](menu.png)
+
 ## Troubleshooting
 
 This use case is purely experimental, and has the only merit to demonstrate
