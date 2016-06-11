@@ -68,7 +68,7 @@ the SSH key communicated to the node by Plumbery.
 
 This command should report an error, since the encrypted disk has not been mounted.
 
-    # echo <secret_passphrase_here> | cryptsetup luksOpen /dev/sdb sdb_crypt -
+    # echo -n <secret_passphrase_here> | cryptsetup luksOpen /dev/sdb sdb_crypt -
     # mount /crypted
     # cat /crypted/welcome.txt
 
@@ -76,6 +76,10 @@ These commands show how to mount the encrypted disk and to read content. This
 has to be done each time the server is rebooted.
 
 ![screenshot](screenshot.png)
+
+The secret is not stored on the node itself, but on plumbery side. To retrieve it, type the following command:
+
+    $ python -m plumbery fittings.yaml secrets
 
 ## Destruction commands
 
