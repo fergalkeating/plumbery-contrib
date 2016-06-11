@@ -4,6 +4,7 @@
 
 - [First example with Ubuntu node](example/first)
 - [Multiple disks added with LVM](example/disks)
+- [Encryption of data disk with LUKS and LVM](example/encryption)
 - [Multiple network interfaces](example/networks)
 - [Kit of multiple Windows nodes](example/windows-kit)
 - [FreeBSD node installed from custom VMDK (experimental)](example/freebsd-vmdk)
