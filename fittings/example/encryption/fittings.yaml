@@ -1,0 +1,186 @@
+---
+
+information:
+
+  - "Encryption of data disk with LUKS and LVM"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: EncryptionFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: EncryptionNetwork
+
+  nodeName:
+    information:
+      - "the name of the node to be deployed"
+    type: str
+    default: encryption01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/example/encryption
+  credit: https://www.linux.com/blog/how-full-encrypt-your-linux-system-lvm-luks
+
+defaults:
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ key.rsa_private }}
+      rsa_public: "{{ key.rsa_public }}"
+
+    users:
+      - default
+
+      - name: centos
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ key.rsa_public }}"
+          - "{{ local.rsa_public }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ locationId.parameter }}"
+
+blueprints:
+
+  - encryption:
+
+      domain:
+        name: "{{ domainName.parameter }}"
+        ipv4: auto
+
+      ethernet:
+        name: "{{ networkName.parameter }}"
+        subnet: 10.0.0.0
+
+      nodes:
+
+        - "{{ nodeName.parameter }}":
+
+            information:
+              - "a disk has been added to this node, and encrypted"
+              - "you can connect to this server in a terminal window:"
+              - "$ ssh centos@{{ node.public }}"
+              - "mount and access encrypted data with:"
+              - "$ cat /crypted/welcome.txt"
+              - "$ echo {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -"
+              - "$ mount /crypted"
+              - "$ cat /crypted/welcome.txt"
+
+
+            appliance: 'CentOS'
+
+            # add a disk to be encrypted
+            #
+            disks:
+              - 1 10 standard
+
+            glue:
+              - internet 22
+
+            monitoring: essentials
+
+            cloud-config:
+
+              packages:
+                - ntp
+                - cryptsetup
+
+              write_files:
+
+                - path: /root/set_pdisk.sh
+                  content: |
+                    #!/usr/bin/env bash
+                    if [ ! -b ${1}1 ]; then
+                    cat <<EOF | fdisk ${1}
+                    n
+                    p
+                    1
+
+
+                    w
+                    EOF
+                    fi
+
+
+                - path: /root/set_vdisk.sh
+                  content: |
+                    #!/usr/bin/env bash
+                    if [ -z "$(blkid ${1})" ];
+                    then
+                        echo "===== Formatting ${1}"
+                        mkfs -t ${2} ${1}
+                    fi
+                    UUID=$(blkid ${1} | sed -n 's/.*UUID=\"\([^\"]*\)\".*/\1/p')
+
+                    if ! grep -q "${UUID}" /etc/fstab; then
+                        echo "===== Adding ${1} to fstab"
+                        LINE="UUID=\"${UUID}\"\t${3}\t${2}\tnoauto,noatime,nodiratime,nodev,noexec,nosuid\t1 2"
+                        echo -e "${LINE}" >> /etc/fstab
+                    fi
+
+                    echo "===== Mounting ${3}"
+                    [ -d "${3}" ] || mkdir -p "${3}"
+                    mount "${3}"
+
+              runcmd:
+                - echo "===== Handling centos identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/centos/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/centos/.ssh/id_rsa.pub
+                - chown centos:centos /home/centos/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+                - echo "===== Partitioning /dev/sdb"
+                - chmod +x /root/set_pdisk.sh
+                - /root/set_pdisk.sh /dev/sdb
+                - fdisk -l /dev/sdb
+
+                - echo "===== Encrypting /dev/sdb with LUKS"
+                - echo {{ encryption.secret }} | cryptsetup luksFormat /dev/sdb -
+                - echo {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -
+                - pvcreate /dev/mapper/sdb_crypt
+                - vgcreate vg_crypt /dev/mapper/sdb_crypt
+                - lvcreate -n lv_crypt -l +100%FREE vg_crypt
+
+                - echo "===== Creating file system"
+                - chmod +x /root/set_vdisk.sh
+                - /root/set_vdisk.sh /dev/mapper/vg_crypt-lv_crypt ext3 /crypted
+
+                - echo "===== Checking the configuration"
+                - fdisk -l
+                - df -H
+                - mount
+
+                - echo "===== Writing on /crypted"
+                - echo hello world > /crypted/welcome.txt
+
+                - echo "===== Shredding temporary data"
+                - shred /var/lib/cloud/seed/nocloud-net/user-data
+
+              power_state:
+                delay: "+3"
+                mode: reboot
+                message: Closing crypted file system and rebooting
+                timeout: 30
+                condition: True
+
+
+
