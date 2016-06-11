@@ -1,0 +1,71 @@
+---
+
+information:
+  - "Multicloud example with nodes in AWS and Dimension Data Cloud"
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/multicloud/aws-stack
+
+parameters:
+  locationId:
+      information:
+        - "the target data centre for this deployment"
+      type: locations.list
+      default: AU10
+  
+  awsRegionId:
+      information:
+        - "the AWS Region"
+      type: str
+      default: ap-southeast-2
+  
+  awsKeyName:
+    information:
+      - "The AWS SSH keypair name"
+    type: str
+    
+  awsSecretKey:
+    information:
+      - "The AWS IAM API key secret"
+    type: str
+    
+  awsSecretId:
+    information:
+      - "The AWS IAM API key ID"
+    type: str
+    
+---
+
+locationId: "{{locationId.parameter}}"
+
+blueprints:
+
+  - first:
+      multicloud:
+        parameters:
+          aws_region: "{{awsRegionId.parameter}}"
+          key_name: "{{awsKeyName.parameter}}"
+          aws_secret_key: "{{awsSecretKey.parameter}}"
+          aws_access_key: "{{awsSecretId.parameter}}"
+          
+      domain:
+        name: MyDataCentre
+        ipv4: 2
+
+      ethernet:
+        name: MyNetwork
+        subnet: 10.0.0.0
+
+      nodes:
+
+        - MyServer:
+
+            appliance: 'Ubuntu 14'
+
+            glue:
+              - internet 22
+
+            monitoring: essentials
+
+            information:
+              - "connect to this server in a terminal window: ssh root@{{ node.public }}"

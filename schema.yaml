@@ -10,8 +10,11 @@ mapping:
     mapping:
       "documentation":
         type: str
-        required: true
+        required: false
       "credit":
+        type: str
+        required: false
+      "inspiration":
         type: str
         required: false
   "defaults":
@@ -56,6 +59,11 @@ mapping:
           regex;(.+):
             type: map
             mapping:
+              "multicloud":
+                type: map
+                mapping:
+                  "parameters":
+                    type: any
               "ethernet":
                 type: map
                 mapping:
