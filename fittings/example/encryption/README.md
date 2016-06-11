@@ -3,7 +3,7 @@
 The objective of this use case is to deploy a server with encrypted storage, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
 
-Linux Unified Key Setup (LUKS) is a disk encryption specification. Over time it has become a platform-independent standard on-disk format for use in various tools. This not only facilitates compatibility and interoperability among different programs, but also assures that they all implement password management in a secure and documented manner.
+[Linux Unified Key Setup (LUKS)](https://gitlab.com/cryptsetup/cryptsetup/blob/master/README.md) is a disk encryption specification. Over time it has become a platform-independent standard on-disk format for use in various tools. This not only facilitates compatibility and interoperability among different programs, but also assures that they all implement password management in a secure and documented manner.
 
 ![LUKS](luks.png)
 
@@ -63,16 +63,19 @@ connection.
 You will have to accept the new host, and authentication will be based on
 the SSH key communicated to the node by Plumbery.
 
-    $ cat /crypted/welcome.txt
+    $ sudo su
+    # cat /crypted/welcome.txt
 
 This command should report an error, since the encrypted disk has not been mounted.
 
-    $ echo <secret_passphrase_here> | cryptsetup luksOpen /dev/sdb sdb_crypt -
-    $ mount /crypted
-    $ cat /crypted/welcome.txt
+    # echo <secret_passphrase_here> | cryptsetup luksOpen /dev/sdb sdb_crypt -
+    # mount /crypted
+    # cat /crypted/welcome.txt
 
 These commands show how to mount the encrypted disk and to read content. This
 has to be done each time the server is rebooted.
+
+![screenshot](screenshot.png)
 
 ## Destruction commands
 

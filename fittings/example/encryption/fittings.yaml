@@ -80,10 +80,11 @@ blueprints:
               - "you can connect to this server in a terminal window:"
               - "$ ssh centos@{{ node.public }}"
               - "mount and access encrypted data with:"
-              - "$ cat /crypted/welcome.txt"
-              - "$ echo {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -"
-              - "$ mount /crypted"
-              - "$ cat /crypted/welcome.txt"
+              - "$ sudo su"
+              - "# cat /crypted/welcome.txt"
+              - "# echo -n {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -"
+              - "# mount /crypted"
+              - "# cat /crypted/welcome.txt"
 
 
             appliance: 'CentOS'
@@ -94,7 +95,7 @@ blueprints:
               - 1 10 standard
 
             glue:
-              - internet 22
+              - internet icmp 22
 
             monitoring: essentials
 
@@ -154,8 +155,8 @@ blueprints:
                 - fdisk -l /dev/sdb
 
                 - echo "===== Encrypting /dev/sdb with LUKS"
-                - echo {{ encryption.secret }} | cryptsetup luksFormat /dev/sdb -
-                - echo {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -
+                - echo -n {{ encryption.secret }} | cryptsetup luksFormat /dev/sdb -
+                - echo -n {{ encryption.secret }} | cryptsetup luksOpen /dev/sdb sdb_crypt -
                 - pvcreate /dev/mapper/sdb_crypt
                 - vgcreate vg_crypt /dev/mapper/sdb_crypt
                 - lvcreate -n lv_crypt -l +100%FREE vg_crypt
@@ -175,12 +176,8 @@ blueprints:
                 - echo "===== Shredding temporary data"
                 - shred /var/lib/cloud/seed/nocloud-net/user-data
 
-              power_state:
-                delay: "+3"
-                mode: reboot
-                message: Closing crypted file system and rebooting
-                timeout: 30
-                condition: True
+                - echo "===== Closing crypted file system and rebooting"
+                - shutdown -r now
 
 
 
