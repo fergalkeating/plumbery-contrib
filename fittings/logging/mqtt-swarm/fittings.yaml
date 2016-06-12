@@ -36,14 +36,14 @@ defaults:
   # the same network domain is used at various facilities
   #
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     description: "Demonstration of MQTT with multiple pingers"
     ipv4: auto
 
   # the same ethernet configuration is used at various facilities
   #
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.0.0.0
 
   # default settings for a remote probe
@@ -81,12 +81,12 @@ defaults:
             #!/usr/bin/awk -f
             /^{{ node.private }}/ {next}
             /^{{ node.ipv6 }}/ {next}
-            /^{{ {{ locationId.parameter }}::queen.ipv6 }}/ {next}
+            /^{{ {{ parameter.locationId }}::queen.ipv6 }}/ {next}
             {print}
             END {
              print "{{ node.private }}    {{ node.name }}"
              print "{{ node.ipv6 }}    {{ node.name }}"
-             print "{{ {{ locationId.parameter }}::queen.ipv6 }}    queen"
+             print "{{ {{ parameter.locationId }}::queen.ipv6 }}    queen"
             }
 
         - path: /etc/init/swarm-pinger.conf
@@ -139,7 +139,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
@@ -147,14 +147,14 @@ blueprints:
 
       ethernet:
         accept:
-          - "AP3::{{ networkName.parameter }}"
-          - "AP4::{{ networkName.parameter }}"
-          - "AP5::{{ networkName.parameter }}"
-          - "AU11::{{ networkName.parameter }}"
-          - "EU6::{{ networkName.parameter }}"
-          - "EU8::{{ networkName.parameter }}"
-          - "NA9::{{ networkName.parameter }}"
-          - "NA12::{{ networkName.parameter }}"
+          - "AP3::{{ parameter.networkName }}"
+          - "AP4::{{ parameter.networkName }}"
+          - "AP5::{{ parameter.networkName }}"
+          - "AU11::{{ parameter.networkName }}"
+          - "EU6::{{ parameter.networkName }}"
+          - "EU8::{{ parameter.networkName }}"
+          - "NA9::{{ parameter.networkName }}"
+          - "NA12::{{ parameter.networkName }}"
 
       nodes:
 
@@ -384,7 +384,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-AP3:
@@ -399,7 +399,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-AP4:
@@ -414,7 +414,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-AP5:
@@ -429,7 +429,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-AU11:
@@ -444,7 +444,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-EU6:
@@ -459,7 +459,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-EU8:
@@ -474,7 +474,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-NA9:
@@ -489,7 +489,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - bee-NA12:

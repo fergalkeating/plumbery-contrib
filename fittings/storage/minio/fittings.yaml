@@ -54,23 +54,23 @@ defaults:
     ssh_pwauth: false
 
 ---
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - minio:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 192.168.20.0
 
       nodes:
 
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: "#minio #ubuntu"
 

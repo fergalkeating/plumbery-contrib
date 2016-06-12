@@ -38,14 +38,14 @@ defaults:
   # the same network domain is used at various facilities
   #
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     description: "Demonstration of Elasticsearch, Logstash and Kibana"
     ipv4: auto
 
   # the same ethernet configuration is used at various facilities
   #
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.0.0.0
 
   # default settings for a remote logger
@@ -80,19 +80,19 @@ defaults:
             #!/usr/bin/awk -f
             /^{{ node.private }}/ {next}
             /^{{ node.ipv6 }}/ {next}
-            /^{{ {{ locationId.parameter }}::{{ nodeName.parameter }}.ipv6 }}/ {next}
+            /^{{ {{ parameter.locationId }}::{{ parameter.nodeName }}.ipv6 }}/ {next}
             {print}
             END {
              print "{{ node.private }}    {{ node.name }}"
              print "{{ node.ipv6 }}    {{ node.name }}"
-             print "{{ {{ locationId.parameter }}::{{ nodeName.parameter }}.ipv6 }}    {{ nodeName.parameter }}"
+             print "{{ {{ parameter.locationId }}::{{ parameter.nodeName }}.ipv6 }}    {{ parameter.nodeName }}"
             }
 
         - path: /root/logstash-forwarder.conf
           content: |
             {
               "network": {
-                "servers": [ "{{ {{ locationId.parameter }}::{{ nodeName.parameter }}.ipv6 }}:5000" ],
+                "servers": [ "{{ {{ parameter.locationId }}::{{ parameter.nodeName }}.ipv6 }}:5000" ],
                 "timeout": 15,
                 "ssl ca": "/etc/logstash-pki/logstash-forwarder.crt"
               },
@@ -130,7 +130,7 @@ defaults:
         - echo "===== Securing logstash-forwarder"
         - sleep 1m
         - mkdir /etc/logstash-pki
-        - rsync -zhave "ssh -i /home/ubuntu/.ssh/id_rsa" ubuntu@{{ nodeName.parameter }}:/var/rsync/logstash-forwarder.crt /etc/logstash-pki
+        - rsync -zhave "ssh -i /home/ubuntu/.ssh/id_rsa" ubuntu@{{ parameter.nodeName }}:/var/rsync/logstash-forwarder.crt /etc/logstash-pki
 
         - echo "===== Configuring logstash"
         - cp -n /etc/logstash-forwarder.conf /etc/logstash-forwarder.conf.origin
@@ -159,7 +159,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
@@ -168,11 +168,11 @@ blueprints:
       ethernet:
         name: "logstash"
         accept:
-          - "AP5::{{ networkName.parameter }}"
+          - "AP5::{{ parameter.networkName }}"
 
       nodes:
 
-        - "{{ nodeName.parameter }}":  # a combo of logstash, elasticsearch, and kibana
+        - "{{ parameter.nodeName }}":  # a combo of logstash, elasticsearch, and kibana
 
             description: "#logstash #elasticsearch #dashboard #kibana #ubuntu"
 
@@ -230,13 +230,13 @@ blueprints:
                     #!/usr/bin/awk -f
                     /^{{ node.private }}/ {next}
                     /^{{ node.ipv6 }}/ {next}
-                    /^{{ logstash-{{ locationId.parameter }}.ipv6 }}/ {next}
+                    /^{{ logstash-{{ parameter.locationId }}.ipv6 }}/ {next}
                     /^{{ dd-ap::AP5::logstash-AP5.ipv6 }}/ {next}
                     {print}
                     END {
                      print "{{ node.private }}    {{ node.name }}"
                      print "{{ node.ipv6 }}    {{ node.name }}"
-                     print "{{ logstash-{{ locationId.parameter }}.ipv6 }}    logstash-{{ locationId.parameter }}"
+                     print "{{ logstash-{{ parameter.locationId }}.ipv6 }}    logstash-{{ parameter.locationId }}"
                      print "{{ dd-ap::AP5::logstash-AP5.ipv6 }}    logstash-AP5"
                     }
 
@@ -359,7 +359,7 @@ blueprints:
                 - cp /root/etc-cron.d-elasticsearch_curator /etc/cron.d/elasticsearch_curator
 
 
-        - "logstash-{{ locationId.parameter }}":
+        - "logstash-{{ parameter.locationId }}":
             default: logstashForwarder
 
 ---
@@ -372,7 +372,7 @@ blueprints:
 
       ethernet:
         accept:
-          - "{{ locationId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.locationId }}::{{ parameter.networkName }}"
 
       nodes:
         - logstash-AP5:

@@ -55,22 +55,22 @@ defaults:
 
 ---
 
-locationId: "{{ primaryId.parameter }}"
+locationId: "{{ parameter.primaryId }}"
 
 blueprints:
 
   - nfs:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         description: "NFS - server side"
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 192.168.20.0
         accept:
-          - "{{ secondaryId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.secondaryId }}::{{ parameter.networkName }}"
 
       nodes:
 
@@ -111,11 +111,11 @@ blueprints:
                   content: |
                     #!/usr/bin/awk -f
                     /^{{ nfsServer.ipv6 }}/ {next}
-                    /^{{ {{ secondaryId.parameter }}::nfsClient.ipv6 }}/ {next}
+                    /^{{ {{ parameter.secondaryId }}::nfsClient.ipv6 }}/ {next}
                     {print}
                     END {
                      print "{{ nfsServer.ipv6 }}    nfsServer"
-                     print "{{ {{ secondaryId.parameter }}::nfsClient.ipv6 }}    nfsClient"
+                     print "{{ {{ parameter.secondaryId }}::nfsClient.ipv6 }}    nfsClient"
                     }
 
               runcmd:
@@ -142,22 +142,22 @@ blueprints:
 
 ---
 
-locationId: "{{ secondaryId.parameter }}"
+locationId: "{{ parameter.secondaryId }}"
 
 blueprints:
 
   - nfs:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         description: "NFS - client side"
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 192.168.20.0
         accept:
-          - "{{ primaryId.parameter }}::{{ networkName.parameter }}"
+          - "{{ parameter.primaryId }}::{{ parameter.networkName }}"
 
       nodes:
         - nfsClient:
@@ -188,11 +188,11 @@ blueprints:
                 - path: /root/hosts.awk
                   content: |
                     #!/usr/bin/awk -f
-                    /^{{ {{ primaryId.parameter }}::nfsServer.ipv6 }}/ {next}
+                    /^{{ {{ parameter.primaryId }}::nfsServer.ipv6 }}/ {next}
                     /^{{ nfsClient.ipv6 }}/ {next}
                     {print}
                     END {
-                     print "{{ {{ primaryId.parameter }}::nfsServer.ipv6 }}    nfsServer"
+                     print "{{ {{ parameter.primaryId }}::nfsServer.ipv6 }}    nfsServer"
                      print "{{ nfsClient.ipv6 }}    nfsClient"
                     }
 

@@ -24,7 +24,7 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   node:
@@ -68,7 +68,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

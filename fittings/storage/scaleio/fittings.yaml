@@ -48,22 +48,22 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.0.1.0
 
   docker-node:
 
     appliance: 'CentOS 6'
 
-    cpu: "{{ cpuPerNode.parameter }}"
-    memory: "{{ memoryPerNode.parameter }}"
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     disks:
-      - "1 {{ diskPerNode.parameter }} economy"
+      - "1 {{ parameter.diskPerNode }} economy"
 
     monitoring: essentials
 
@@ -153,7 +153,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

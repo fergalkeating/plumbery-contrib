@@ -9,7 +9,7 @@ parameters:
     information:
       - "the target data centre for this deployment"
     type: locations.list
-    default: EU7
+    default: EU8
 
   domainName:
     information:
@@ -41,11 +41,11 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.0.3.0
 
   storagegrid-node:
@@ -54,70 +54,70 @@ defaults:
 
     monitoring: essentials
 
-  cloud-config:
-
-    hostname: "{{ node.name }}"
-
-    packages:
-      - ntp
-      - wget
-      - git
-      - tar
-
-    write_files:
-
-      - path: /root/hosts.awk
-        content: |
-          #!/usr/bin/awk -f
-          /^{{ admin-node.private }}/ {next}
-          /^{{ gateway-node.private }}/ {next}
-          /^{{ installer-node.private }}/ {next}
-          /^{{ storage-node1.private }}/ {next}
-          /^{{ storage-node2.private }}/ {next}
-          /^{{ storage-node3.private }}/ {next}
-          /^{{ storage-node4.private }}/ {next}
-          {print}
-          END {
-           print "{{ admin-node.private }}    admin-node"
-           print "{{ gateway-node.private }}    gateway-node"
-           print "{{ installer-node.private }}    installer-node"
-           print "{{ storage-node1.private }}    storage-node1"
-           print "{{ storage-node2.private }}    storage-node2"
-           print "{{ storage-node3.private }}    storage-node3"
-           print "{{ storage-node4.private }}    storage-node4"
-          }
-
-    runcmd:
-
-      - echo "===== Handling root identity"
-      - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
-      - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
-      - chown root:root /root/.ssh/*
-
-      - echo "===== Updating /etc/hosts"
-      - cp -n /etc/hosts /etc/hosts.original
-      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
-
-    ssh_keys:
-      rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
-
-    users:
-      - default
-
-      - name: root
-        sudo: 'ALL=(ALL) NOPASSWD:ALL'
-        ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
-
-    disable_root: false
-    ssh_pwauth: true
+#  cloud-config:
+#
+#    hostname: "{{ node.name }}"
+#
+#    packages:
+#      - ntp
+#      - wget
+#      - git
+#      - tar
+#
+#    write_files:
+#
+#      - path: /root/hosts.awk
+#        content: |
+#          #!/usr/bin/awk -f
+#          /^{{ installer-node.private }}/ {next}
+#          /^{{ DDSG-ADM1.private }}/ {next}
+#          /^{{ DDSG-S1.private }}/ {next}
+#          /^{{ DDSG-S2.private }}/ {next}
+#          /^{{ DDSG-S3.private }}/ {next}
+#          /^{{ DDSG-S4.private }}/ {next}
+#          /^{{ DDSG-G1.private }}/ {next}
+#          {print}
+#          END {
+#           print "{{ installer-node.private }}    installer-node"
+#           print "{{ DDSG-ADM1.private }}    DDSG-ADM1"
+#           print "{{ DDSG-S1.private }}    DDSG-S1"
+#           print "{{ DDSG-S2.private }}    DDSG-S2"
+#           print "{{ DDSG-S3.private }}    DDSG-S3"
+#           print "{{ DDSG-S4.private }}    DDSG-S4"
+#           print "{{ DDSG-G1.private }}    DDSG-G1"
+#          }
+#
+#    runcmd:
+#
+#      - echo "===== Handling root identity"
+#      - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+#      - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
+#      - chown root:root /root/.ssh/*
+#
+#      - echo "===== Updating /etc/hosts"
+#      - cp -n /etc/hosts /etc/hosts.original
+#      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+#
+#    ssh_keys:
+#      rsa_private: |
+#        {{ key.rsa_private }}
+#      rsa_public: "{{ key.rsa_public }}"
+#
+#    users:
+#      - default
+#
+#      - name: root
+#        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+#        ssh-authorized-keys:
+#          - "{{ key.rsa_public }}"
+#          - "{{ local.rsa_public }}"
+#
+#    disable_root: false
+#    ssh_pwauth: true
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
@@ -125,13 +125,31 @@ blueprints:
 
       nodes:
 
-        - admin-node:
+        - installer-node:
+            default: storagegrid-node
+
+            appliance: 'UB-StorageGRID-Base'
+
+            information:
+              - "this is a StorageGRID installer node from NetApp"
+              - "ssh root@{{ node.public }}"
+
+            cpu: 4
+            memory: 8
+
+            disks:
+              - 1 100 standard
+
+            glue:
+              - internet icmp 22 80
+              - primary .10
+
+        - DDSG-ADM1:
             default: storagegrid-node
 
             information:
               - "this is a StorageGRID administration node from NetApp"
               - "ssh root@{{ node.public }}"
-              - "cat /var/log/cloud-init-output.log"
 
             cpu: 4
             memory: 8
@@ -140,15 +158,79 @@ blueprints:
               - 1 400 standard
 
             glue:
-              - internet 22
+              - internet icmp 22 80 443
+              - primary .11
 
-        - gateway-node:
+        - DDSG-S1:
+            default: storagegrid-node
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
+
+            disks:
+              - 0 100 standard
+              - 1 300 standard
+              - 2 50 standard
+              - 3 50 standard
+
+            glue:
+              - primary .12
+              - internet icmp 22 18080 18082
+
+        - DDSG-S2:
+            default: storagegrid-node
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
+
+            disks:
+              - 0 100 standard
+              - 1 300 standard
+              - 2 50 standard
+              - 3 50 standard
+
+            glue:
+              - primary .13
+              - internet icmp 22 18080 18082
+
+        - DDSG-S3:
+            default: storagegrid-node
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
+
+            disks:
+              - 0 100 standard
+              - 1 300 standard
+              - 2 50 standard
+              - 3 50 standard
+
+            glue:
+              - primary .14
+              - internet icmp 22 18080 18082
+
+        - DDSG-S4:
+            default: storagegrid-node
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
+
+            disks:
+              - 0 100 standard
+              - 1 300 standard
+              - 2 50 standard
+              - 3 50 standard
+
+            glue:
+              - primary .15
+              - internet icmp 22 18080 18082
+
+        - DDSG-G1:
             default: storagegrid-node
 
             information:
               - "this is a StorageGRID gateway node from NetApp"
               - "ssh root@{{ node.public }}"
-              - "cat /var/log/cloud-init-output.log"
 
             cpu: 4
             memory: 8
@@ -157,15 +239,19 @@ blueprints:
               - 1 100 standard
 
             glue:
-              - internet 22
+              - primary .16
+              - internet icmp 22 1507 8080 8082
 
-        - installer-node:
+  - suse-only:
+
+      nodes:
+
+        - suse-node:
             default: storagegrid-node
 
             information:
-              - "this is a StorageGRID installer node from NetApp"
+              - "this is a SuSE node"
               - "ssh root@{{ node.public }}"
-              - "cat /var/log/cloud-init-output.log"
 
             cpu: 4
             memory: 8
@@ -174,25 +260,66 @@ blueprints:
               - 1 100 standard
 
             glue:
-              - internet 22
+              - primary .21
+              - internet icmp 22
 
-#        - storage-node[1..4]:
-#            default: storagegrid-node
-#
-#            information:
-#              - "this is a StorageGRID storage node from NetApp"
-#              - "ssh root@{{ node.public }}"
-#              - "cat /var/log/cloud-init-output.log"
+            cloud-config:
 
-#            cpu: "{{ cpuPerNode.parameter }}"
-#            memory: "{{ memoryPerNode.parameter }}"
+              hostname: "{{ node.name }}"
 
-#            disks:
-#              - 1 100 standard
-#              - 2 300 standard
-#              - 3 50 standard
-#              - 4 50 standard
+              packages:
+                - ntp
+                - wget
+                - git
+                - tar
 
-#            glue:
-#              - internet 22
+              write_files:
 
+                - path: /root/hosts.awk
+                  content: |
+                    #!/usr/bin/awk -f
+                    /^{{ installer-node.private }}/ {next}
+                    /^{{ DDSG-ADM1.private }}/ {next}
+                    /^{{ DDSG-S1.private }}/ {next}
+                    /^{{ DDSG-S2.private }}/ {next}
+                    /^{{ DDSG-S3.private }}/ {next}
+                    /^{{ DDSG-S4.private }}/ {next}
+                    /^{{ DDSG-G1.private }}/ {next}
+                    {print}
+                    END {
+                     print "{{ installer-node.private }}    installer-node"
+                     print "{{ DDSG-ADM1.private }}    DDSG-ADM1"
+                     print "{{ DDSG-S1.private }}    DDSG-S1"
+                     print "{{ DDSG-S2.private }}    DDSG-S2"
+                     print "{{ DDSG-S3.private }}    DDSG-S3"
+                     print "{{ DDSG-S4.private }}    DDSG-S4"
+                     print "{{ DDSG-G1.private }}    DDSG-G1"
+                    }
+
+              runcmd:
+
+                - echo "===== Handling root identity"
+                - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
+                - chown root:root /root/.ssh/*
+
+                - echo "===== Updating /etc/hosts"
+                - cp -n /etc/hosts /etc/hosts.original
+                - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+              ssh_keys:
+                rsa_private: |
+                  {{ key.rsa_private }}
+                rsa_public: "{{ key.rsa_public }}"
+
+              users:
+                - default
+
+                - name: root
+                  sudo: 'ALL=(ALL) NOPASSWD:ALL'
+                  ssh-authorized-keys:
+                    - "{{ key.rsa_public }}"
+                    - "{{ local.rsa_public }}"
+
+              disable_root: false
+              ssh_pwauth: true

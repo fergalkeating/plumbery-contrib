@@ -48,13 +48,13 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     service: essentials
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
-    subnet: "{{ networkSubnet.parameter }}"
+    name: "{{ parameter.networkName }}"
+    subnet: "{{ parameter.networkSubnet }}"
 
   omniNode:
 
@@ -151,14 +151,14 @@ defaults:
         - path: /root/dnsmasq.sed
           content: |
             #!/usr/bin/sed
-            s|#dhcp-range=192.168.0.50,192.168.0.150,12h|dhcp-range={{ networkRange.parameter }},255.255.255.0,12h|
+            s|#dhcp-range=192.168.0.50,192.168.0.150,12h|dhcp-range={{ parameter.networkRange }},255.255.255.0,12h|
             s|#dhcp-boot=pxelinux.0|dhcp-boot=netboot.xyz-undionly.kpxe|
             s|#enable-tftp|enable-tftp|
             s|#tftp-root=/var/ftpd|tftp-root=/var/tftp|
             s|#dhcp-leasefile=/var/lib/misc/dnsmasq.leases|dhcp-leasefile=/var/lib/misc/dnsmasq.leases|
             s|#dhcp-authoritative|dhcp-authoritative|
             s|#log-dhcp|log-dhcp|
-            s|#dhcp-option=3,1.2.3.4|dhcp-option=3,{{ networkGateway.parameter }}|
+            s|#dhcp-option=3,1.2.3.4|dhcp-option=3,{{ parameter.networkGateway }}|
 
 #            chain http://boot.salstar.sk
 
@@ -208,7 +208,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

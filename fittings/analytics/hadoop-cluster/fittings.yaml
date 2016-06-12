@@ -49,12 +49,12 @@ defaults:
 
   # nodes are deployed in a single network domain
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   # nodes are deployed on a single VLAN
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.60.0.0
 
   # settings for any Hadoop master node
@@ -111,11 +111,11 @@ defaults:
 
     appliance: 'Ubuntu 14'
 
-    cpu: "{{ cpuPerNode.parameter }}"
-    memory: "{{ memoryPerNode.parameter }}"
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     disks:
-      - "1 {{ diskPerNode.parameter }} standard"
+      - "1 {{ parameter.diskPerNode }} standard"
 
     glue:
       - internet 22
@@ -315,7 +315,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

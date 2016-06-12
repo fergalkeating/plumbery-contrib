@@ -56,23 +56,23 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - itop:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         ipv4: auto
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 10.123.0.0
 
       nodes:
 
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: "#bigbluebutton #ubuntu"
 

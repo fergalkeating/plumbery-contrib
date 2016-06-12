@@ -36,12 +36,12 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     service: essentials
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 192.168.20.0
 
   freebsdNode:
@@ -144,11 +144,11 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - freebsd:
       nodes:
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
             default: freebsdNode

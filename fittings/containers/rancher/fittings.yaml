@@ -42,12 +42,12 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     service: essentials
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 192.168.20.0
 
   rancher-node:
@@ -64,7 +64,7 @@ defaults:
     #
     appliance: 'Ubuntu 14'
     cpu: 32
-    memory: "{{ memoryPerNode.parameter }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     # enough storage space
     #
@@ -154,11 +154,11 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - rancher:
       nodes:
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
             default: rancher-node

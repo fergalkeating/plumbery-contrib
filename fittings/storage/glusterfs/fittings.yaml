@@ -36,11 +36,11 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 192.168.20.0
 
   glusterfs-node:
@@ -56,8 +56,8 @@ defaults:
     memory: 8
 
     disks:
-      - "1 {{ diskPerNode.parameter }} economy"
-      - "2 {{ diskPerNode.parameter }} economy"
+      - "1 {{ parameter.diskPerNode }} economy"
+      - "2 {{ parameter.diskPerNode }} economy"
 
     monitoring: essentials
 
@@ -160,7 +160,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

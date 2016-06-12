@@ -56,24 +56,24 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - gitlab:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         service: essentials
         ipv4: auto
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 192.168.20.0
 
       nodes:
 
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: "#gitlab #samba #centos"
 
@@ -112,10 +112,10 @@ blueprints:
                 - path: /root/hosts.awk
                   content: |
                     #!/usr/bin/awk -f
-                    /^{{ {{ nodeName.parameter }}.private }}/ {next}
+                    /^{{ {{ parameter.nodeName }}.private }}/ {next}
                     {print}
                     END {
-                     print "{{ {{ nodeName.parameter }}.private }}    {{ nodeName.parameter }}"
+                     print "{{ {{ parameter.nodeName }}.private }}    {{ parameter.nodeName }}"
                     }
 
                 - path: /root/etc-samba-smb.conf
