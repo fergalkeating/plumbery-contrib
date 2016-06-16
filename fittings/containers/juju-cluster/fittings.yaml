@@ -1,0 +1,228 @@
+---
+
+information:
+  - "Juju cluster, with one client, one bootstrap, and three nodes"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: JujuClusterFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: JujuClusterNetwork
+
+  cpuPerNode:
+    information:
+      - "the count of CPU per node"
+    type: str
+    default: 2
+
+  memoryPerNode:
+    information:
+      - "the memory per node (GB)"
+    type: str
+    default: 4
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/containers/juju-cluster
+  credit: https://jujucharms.com/docs/stable/getting-started
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.10.10.0
+
+  juju-node:
+
+    appliance: 'Ubuntu 14'
+
+    glue:
+      - internet icmp 22 80 443
+
+    monitoring: essentials
+
+    cloud-config:
+
+      hostname: "{{ node.name }}"
+
+      apt_sources:
+        - source: "ppa:juju/stable"
+
+      packages:
+        - ntp
+        - python-software-properties
+        - juju-quickstart
+        - juju-core
+
+      write_files:
+
+        - path: /root/hosts.awk
+          content: |
+            #!/usr/bin/awk -f
+            /^{{ client.private }}/ {next}
+            /^{{ bootstrap.private }}/ {next}
+            /^{{ node1.private }}/ {next}
+            /^{{ node2.private }}/ {next}
+            /^{{ node3.private }}/ {next}
+            {print}
+            END {
+             print "{{ client.private }}    client"
+             print "{{ bootstrap.private }}    bootstrap"
+             print "{{ node1.private }}    node1"
+             print "{{ node2.private }}    node2"
+             print "{{ node3.private }}    node3"
+            }
+
+      runcmd:
+
+        - echo "===== Handling ubuntu identity"
+        - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+        - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+        - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+        - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+        - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
+        - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+        - echo "===== Updating /etc/hosts"
+        - cp -n /etc/hosts /etc/hosts.original
+        - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ key.rsa_private }}
+      rsa_public: "{{ key.rsa_public }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ key.rsa_public }}"
+          - "{{ local.rsa_public }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - cluster: client bootstrap nodes
+
+  - client: # to run Juju from the command-line
+
+      nodes:
+
+        - client:
+            default: juju-node
+
+            information:
+              - "the Juju client workstation"
+              - "connect remotely with:"
+              - "$ ssh ubuntu@{{ node.public }}"
+              - "then handle the cluster with:"
+              - "$ sudo su"
+              - "# juju status"
+
+            cloud-config:
+
+              write_files:
+
+                - path: /root/juju-environments.sed
+                  content: |
+                    #!/usr/bin/sed
+                    /bootstrap-host:/s|^.*$|        bootstrap-host: {{ bootstrap.private }}|
+                    /bootstrap-user:/s|^.*$|        bootstrap-user: ubuntu|
+
+                - path: /root/setup-juju.sh
+                  permissions: '0755'
+                  content: |
+                    #!/usr/bin/env bash
+                    export USER="ubuntu"
+                    export HOME="/root"
+
+                    echo "===== Configuring Juju bootstrap"
+                    juju generate-config
+                    juju switch manual
+                    sed -i -f /root/juju-environments.sed /root/.juju/environments.yaml
+
+                    echo "===== Bootstrapping Juju"
+                    juju bootstrap
+
+                    echo "===== Adding nodes to the cluster"
+                    juju add-machine ssh:ubuntu@{{ node1.private }}
+                    juju add-machine ssh:ubuntu@{{ node2.private }}
+                    juju add-machine ssh:ubuntu@{{ node3.private }}
+
+                    echo "===== Deploying WordPress"
+                    juju deploy wordpress
+
+                    echo "===== Deploying MySQL"
+                    juju deploy mysql
+
+                    echo "===== Connecting WordPress to MySQL"
+                    juju add-relation wordpress mysql
+
+                    echo "===== Exposing WordPress"
+                    juju expose wordpress
+
+                    echo "===== Checking status"
+                    juju status
+
+              runcmd:
+
+                - echo "===== Waiting for all nodes to be ready"
+                - sleep 5m
+
+                - echo "===== Installing Juju"
+                - /root/setup-juju.sh
+
+  - bootstrap: # the master node for the full cluster
+
+      nodes:
+
+        - bootstrap:
+            default: juju-node
+
+            information:
+              - "the Juju bootstrap server"
+              - "$ ssh ubuntu@{{ node.public }}"
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
+
+  - nodes: # some nodes contributing to the cluster
+
+      nodes:
+
+        - node[1..3]:
+            default: juju-node
+
+            information:
+              - "a Juju node available to the cluster"
+              - "$ ssh ubuntu@{{ node.public }}"
+
+            cpu: "{{ parameter.cpuPerNode }}"
+            memory: "{{ parameter.memoryPerNode }}"
