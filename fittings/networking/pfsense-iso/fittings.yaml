@@ -1,0 +1,129 @@
+---
+
+information:
+  - "pfSense installed from ISO (experimental)"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: pfSenseFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: pfSenseNetwork
+
+  nodeName:
+    information:
+      - "the name of the node to be deployed"
+    type: str
+    default: pfsense01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/example/pfsense-iso
+  credit: https://www.pfsense.org/download/
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    service: essentials
+    ipv4: auto
+
+  pfsenseNode:
+
+    information:
+      - "to install pfSense:"
+      - "ssh ubuntu@{{ node.public }}"
+      - sudo su
+      - qemu-system-x86_64 -curses -drive file=/dev/sdb -drive file=/dev/sda -m 1G
+
+    appliance: 'Ubuntu 14'
+    cpu: 4
+    memory: 16
+
+    disks:
+      - 1 10 standard
+
+    glue:
+      - internet icmp 22 80 443
+
+    cloud-config:
+
+      packages:
+        - ntp
+        - qemu
+        - qemu-kvm
+        - libvirt-bin
+
+      runcmd:
+
+        - echo "===== Handling ubuntu identity"
+        - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+        - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+        - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+        - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+        - echo "===== Downloading pfSense"
+        - cd /root
+        - wget -q https://frafiles.pfsense.org/mirror/downloads/pfSense-CE-memstick-2.3.1-RELEASE-amd64.img.gz
+        - ls -la pfSense*
+
+        - echo "===== Extracting the ISO file to secondary hard drive"
+        - gzip -dc pfSense-CE-memstick-2.3.1-RELEASE-amd64.img.gz | sudo dd of=/dev/sdb bs=1M
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ key.rsa_private }}
+      rsa_public: "{{ key.rsa_public }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ key.rsa_public }}"
+          - "{{ local.rsa_public }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - pfsense:
+
+      ethernet:
+        name: "{{ parameter.networkName }}"
+        subnet: 192.168.20.0
+
+      nodes:
+        - "{{ parameter.nodeName }}":
+            default: pfsenseNode
+
+            glue:
+              - pfSense2
+
+  - pfSense2:
+
+      ethernet:
+        name: internalNetwork
+        subnet: 192.168.30.0
+
+

@@ -37,6 +37,7 @@
 - [Docker node](containers/docker)
 - [Kubernetes node](containers/kubernetes)
 - [Docker Swarm](containers/docker-swarm)
+- [Juju cluster, with one client, one bootstrap, and three nodes](containers/juju-cluster)
 - [Mesosphere cluster with Docker, on 3 masters and 9 nodes](containers/mesosphere-cluster)
 
 ## Database services
@@ -54,6 +55,7 @@
 
 - [Site-to-site IPsec tunnel with Openswan](networking/openswan)
 - [OpenVPN gateway](networking/openvpn)
+- [pfSense installed from ISO (experimental)](networking/pfsense-iso)
 
 ## Storage services
 
