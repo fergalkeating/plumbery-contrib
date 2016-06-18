@@ -100,8 +100,8 @@ defaults:
 #
 #    ssh_keys:
 #      rsa_private: |
-#        {{ key.rsa_private }}
-#      rsa_public: "{{ key.rsa_public }}"
+#        {{ rsa_private.key }}
+#      rsa_public: "{{ rsa_public.key }}"
 #
 #    users:
 #      - default
@@ -109,8 +109,8 @@ defaults:
 #      - name: root
 #        sudo: 'ALL=(ALL) NOPASSWD:ALL'
 #        ssh-authorized-keys:
-#          - "{{ key.rsa_public }}"
-#          - "{{ local.rsa_public }}"
+#          - "{{ rsa_public.key }}"
+#          - "{{ rsa_public.local }}"
 #
 #    disable_root: false
 #    ssh_pwauth: true
@@ -309,8 +309,8 @@ blueprints:
 
               ssh_keys:
                 rsa_private: |
-                  {{ key.rsa_private }}
-                rsa_public: "{{ key.rsa_public }}"
+                  {{ rsa_private.key }}
+                rsa_public: "{{ rsa_public.key }}"
 
               users:
                 - default
@@ -318,8 +318,8 @@ blueprints:
                 - name: root
                   sudo: 'ALL=(ALL) NOPASSWD:ALL'
                   ssh-authorized-keys:
-                    - "{{ key.rsa_public }}"
-                    - "{{ local.rsa_public }}"
+                    - "{{ rsa_public.key }}"
+                    - "{{ rsa_public.local }}"
 
               disable_root: false
               ssh_pwauth: true
