@@ -9,6 +9,7 @@
 - [Kit of multiple Windows nodes](example/windows-kit)
 - [FreeBSD node installed from custom VMDK (experimental)](example/freebsd-vmdk)
 - [Debian network installation with iPXE and DNSMASQ (experimental)](example/debian-ipxe)
+- [Oracle Linux installed from ISO (experimental)](example/oracle-iso)
 - [Select your operating system installer with netboot.xyz and iPXE (experimental)](example/omniboot-ipxe)
 - [Ubuntu desktop](example/ubuntu-desktop)
 - [The master plan to conquer the world](example/gigafox)
