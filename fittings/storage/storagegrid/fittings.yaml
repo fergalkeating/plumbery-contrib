@@ -23,18 +23,6 @@ parameters:
     type: str
     default: StoragegridNetwork
 
-  cpuPerNode:
-    information:
-      - "the quantity of CPU given to one StorageGRID node"
-    type: [4..32]
-    default: 8
-
-  memoryPerNode:
-    information:
-      - "the quantity of RAM given to one StorageGRID node, in GB"
-    type: [8..256]
-    default: 16
-
 links:
   documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/storage/storagegrid
 
@@ -46,74 +34,15 @@ defaults:
 
   ethernet:
     name: "{{ parameter.networkName }}"
-    subnet: 10.0.3.0
+    subnet: 10.67.8.0
+
+  blueprints: storagegrid altavault
 
   storagegrid-node:
 
     appliance: 'SuSE'
 
     monitoring: essentials
-
-#  cloud-config:
-#
-#    hostname: "{{ node.name }}"
-#
-#    packages:
-#      - ntp
-#      - wget
-#      - git
-#      - tar
-#
-#    write_files:
-#
-#      - path: /root/hosts.awk
-#        content: |
-#          #!/usr/bin/awk -f
-#          /^{{ installer-node.private }}/ {next}
-#          /^{{ DDSG-ADM1.private }}/ {next}
-#          /^{{ DDSG-S1.private }}/ {next}
-#          /^{{ DDSG-S2.private }}/ {next}
-#          /^{{ DDSG-S3.private }}/ {next}
-#          /^{{ DDSG-S4.private }}/ {next}
-#          /^{{ DDSG-G1.private }}/ {next}
-#          {print}
-#          END {
-#           print "{{ installer-node.private }}    installer-node"
-#           print "{{ DDSG-ADM1.private }}    DDSG-ADM1"
-#           print "{{ DDSG-S1.private }}    DDSG-S1"
-#           print "{{ DDSG-S2.private }}    DDSG-S2"
-#           print "{{ DDSG-S3.private }}    DDSG-S3"
-#           print "{{ DDSG-S4.private }}    DDSG-S4"
-#           print "{{ DDSG-G1.private }}    DDSG-G1"
-#          }
-#
-#    runcmd:
-#
-#      - echo "===== Handling root identity"
-#      - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
-#      - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
-#      - chown root:root /root/.ssh/*
-#
-#      - echo "===== Updating /etc/hosts"
-#      - cp -n /etc/hosts /etc/hosts.original
-#      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
-#
-#    ssh_keys:
-#      rsa_private: |
-#        {{ rsa_private.key }}
-#      rsa_public: "{{ rsa_public.key }}"
-#
-#    users:
-#      - default
-#
-#      - name: root
-#        sudo: 'ALL=(ALL) NOPASSWD:ALL'
-#        ssh-authorized-keys:
-#          - "{{ rsa_public.key }}"
-#          - "{{ rsa_public.local }}"
-#
-#    disable_root: false
-#    ssh_pwauth: true
 
 ---
 
@@ -125,143 +54,117 @@ blueprints:
 
       nodes:
 
-        - installer-node:
-            default: storagegrid-node
-
-            appliance: 'UB-StorageGRID-Base'
-
-            information:
-              - "this is a StorageGRID installer node from NetApp"
-              - "ssh root@{{ node.public }}"
-
-            cpu: 4
-            memory: 8
-
-            disks:
-              - 1 100 standard
-
-            glue:
-              - internet icmp 22 80
-              - primary .10
-
         - DDSG-ADM1:
             default: storagegrid-node
 
+            appliance: "DDSG-ADM1_VL"
+
             information:
-              - "this is a StorageGRID administration node from NetApp"
-              - "ssh root@{{ node.public }}"
-
-            cpu: 4
-            memory: 8
-
-            disks:
-              - 1 400 standard
+              - "StorageGRID administration node from NetApp"
+              - "http://{{ node.public }}"
 
             glue:
+              - primary .231
               - internet icmp 22 80 443
-              - primary .11
 
         - DDSG-S1:
             default: storagegrid-node
 
-            cpu: "{{ parameter.cpuPerNode }}"
-            memory: "{{ parameter.memoryPerNode }}"
+            appliance: "DDSG-S1_VL"
 
-            disks:
-              - 0 100 standard
-              - 1 300 standard
-              - 2 50 standard
-              - 3 50 standard
+            information:
+              - "StorageGRID storage node from NetApp"
 
             glue:
-              - primary .12
+              - primary .232
               - internet icmp 22 18080 18082
 
         - DDSG-S2:
             default: storagegrid-node
 
-            cpu: "{{ parameter.cpuPerNode }}"
-            memory: "{{ parameter.memoryPerNode }}"
+            appliance: "DDSG-S2-VL"
 
-            disks:
-              - 0 100 standard
-              - 1 300 standard
-              - 2 50 standard
-              - 3 50 standard
+            information:
+              - "StorageGRID storage node from NetApp"
 
             glue:
-              - primary .13
+              - primary .233
               - internet icmp 22 18080 18082
 
         - DDSG-S3:
             default: storagegrid-node
 
-            cpu: "{{ parameter.cpuPerNode }}"
-            memory: "{{ parameter.memoryPerNode }}"
+            appliance: "DDSG-S3_VL"
 
-            disks:
-              - 0 100 standard
-              - 1 300 standard
-              - 2 50 standard
-              - 3 50 standard
+            information:
+              - "StorageGRID storage node from NetApp"
 
             glue:
-              - primary .14
+              - primary .234
               - internet icmp 22 18080 18082
 
         - DDSG-S4:
             default: storagegrid-node
 
-            cpu: "{{ parameter.cpuPerNode }}"
-            memory: "{{ parameter.memoryPerNode }}"
+            appliance: "DDSG-S4_VL"
 
-            disks:
-              - 0 100 standard
-              - 1 300 standard
-              - 2 50 standard
-              - 3 50 standard
+            information:
+              - "StorageGRID storage node from NetApp"
 
             glue:
-              - primary .15
+              - primary .235
               - internet icmp 22 18080 18082
 
         - DDSG-G1:
             default: storagegrid-node
 
+            appliance: "DDSG-G1_VL"
+
             information:
               - "this is a StorageGRID gateway node from NetApp"
               - "ssh root@{{ node.public }}"
 
-            cpu: 4
-            memory: 8
-
-            disks:
-              - 1 100 standard
-
             glue:
-              - primary .16
+              - primary .236
               - internet icmp 22 1507 8080 8082
 
-  - suse-only:
+  - altavault:
 
       nodes:
 
-        - suse-node:
+        - ALTAVAULT1:
             default: storagegrid-node
 
+            appliance: "BASE-ALTAVAULT-VL"
+
             information:
-              - "this is a SuSE node"
+              - "Altavault node from NetApp"
               - "ssh root@{{ node.public }}"
 
-            cpu: 4
-            memory: 8
+            glue:
+              - primary .101
+              - internet icmp 22 80 443
+
+  - beachhead:
+
+      nodes:
+
+        - beachhead:
+
+            information:
+              - "utility node to store FTP files, to ping nodes, etc."
+              - "ssh ubuntu@{{ node.public }}"
+
+            appliance: 'Ubuntu 14'
 
             disks:
               - 1 100 standard
 
             glue:
-              - primary .21
+              - primary .111
               - internet icmp 22
+
+            monitoring: essentials
 
             cloud-config:
 
@@ -269,39 +172,37 @@ blueprints:
 
               packages:
                 - ntp
-                - wget
-                - git
-                - tar
+                - lftp
+                - nmap
 
               write_files:
 
                 - path: /root/hosts.awk
                   content: |
                     #!/usr/bin/awk -f
-                    /^{{ installer-node.private }}/ {next}
-                    /^{{ DDSG-ADM1.private }}/ {next}
-                    /^{{ DDSG-S1.private }}/ {next}
-                    /^{{ DDSG-S2.private }}/ {next}
-                    /^{{ DDSG-S3.private }}/ {next}
-                    /^{{ DDSG-S4.private }}/ {next}
-                    /^{{ DDSG-G1.private }}/ {next}
+                    /^{{ node.private }}/ {next}
+                    /^{{ node.ipv6 }}/ {next}
                     {print}
                     END {
-                     print "{{ installer-node.private }}    installer-node"
-                     print "{{ DDSG-ADM1.private }}    DDSG-ADM1"
-                     print "{{ DDSG-S1.private }}    DDSG-S1"
-                     print "{{ DDSG-S2.private }}    DDSG-S2"
-                     print "{{ DDSG-S3.private }}    DDSG-S3"
-                     print "{{ DDSG-S4.private }}    DDSG-S4"
-                     print "{{ DDSG-G1.private }}    DDSG-G1"
+                     print "{{ node.private }}    {{ node.name }}"
+                     print "{{ node.ipv6 }}    {{ node.name }}"
                     }
 
               runcmd:
 
-                - echo "===== Handling root identity"
+                - echo "===== Growing LVM with added disk"
+                - pvcreate /dev/sdb
+                - vgextend rootvol00 /dev/sdb
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+                - echo "===== Installing ssh keys"
+                - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+                - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+                - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
                 - cp -n /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
                 - cp -n /etc/ssh/ssh_host_rsa_key.pub /root/.ssh/id_rsa.pub
-                - chown root:root /root/.ssh/*
+                - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
 
                 - echo "===== Updating /etc/hosts"
                 - cp -n /etc/hosts /etc/hosts.original
@@ -315,7 +216,7 @@ blueprints:
               users:
                 - default
 
-                - name: root
+                - name: ubuntu
                   sudo: 'ALL=(ALL) NOPASSWD:ALL'
                   ssh-authorized-keys:
                     - "{{ rsa_public.key }}"
@@ -323,3 +224,5 @@ blueprints:
 
               disable_root: false
               ssh_pwauth: true
+
+
