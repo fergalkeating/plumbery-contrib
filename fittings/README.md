@@ -55,6 +55,7 @@
 
 ## Logging services
 
+- [Kafka cluster with 3 nodes](logging/kafka-cluster)
 - [Centralised logging with Elasticsearch, Logstash, and Kibana](logging/elasticsearch-kibana-logstash)
 - [Multiple pingers connected to a MQTT broker and to a Kibana dashboard](logging/mqtt-swarm)
 
