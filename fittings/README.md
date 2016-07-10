@@ -41,11 +41,17 @@
 - [Juju cluster, with one client, one bootstrap, and three nodes](containers/juju-cluster)
 - [Mesosphere cluster with Docker, on 3 masters and 9 nodes](containers/mesosphere-cluster)
 
+## Analytics services
+
+- [Hadoop single node cluster](analytics/hadoop-node)
+- [Hadoop cluster with 1 master and 3 nodes](analytics/hadoop-cluster)
+
 ## Database services
 
 - [MySQL replication over IPv6 back-end network](database/mysql-master-slave)
 - [Cluster of Redis servers](database/redis-cluster)
 - [Cluster of MongoDB servers](database/mongodb-cluster)
+- [Cassandra ring with 5 nodes](database/cassandra-cluster)
 
 ## Logging services
 
