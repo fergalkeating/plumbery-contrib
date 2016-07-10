@@ -14,6 +14,10 @@
 - [Ubuntu desktop](example/ubuntu-desktop)
 - [The master plan to conquer the world](example/gigafox)
 
+## Multicloud
+
+- [Multicloud example with nodes in AWS and Dimension Data Cloud](multicloud/aws-stack)
+
 ## Application services
 
 - [WordPress blogging server](applications/wordpress)
@@ -72,6 +76,7 @@
 - [NFS server and client over IPv6 back-end network](storage/nfs)
 - [Personal storage with ownCloud](storage/owncloud)
 - [Samba file sharing server](storage/samba)
+- [StorageGRID Webscale cluster of 4 nodes](storage/storagegrid)
 - [Standalone minio s3-compatible object server](storage/minio)
 
 ## Web services
