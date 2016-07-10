@@ -5,8 +5,10 @@ This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Pl
 
 ![Hadoop](hadoop.png)
 
-With this use case we prepare a ready-to-use HDFS and YARN cluster. The master is running
+With this use case we prepare a ready-to-use HDFS and YARN cluster with multiple nodes. The master is running
 the HDFS naming service and the YARN resource manager service. Other nodes store HDFS data and provide running containers to YARN.
+
+![Architecture](architecture.png)
 
 ## Requirements for this use case
 
