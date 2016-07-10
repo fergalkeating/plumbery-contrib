@@ -1,0 +1,321 @@
+---
+
+information:
+  - "Kafka cluster with 3 nodes"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU7
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: KafkaFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: KafkaNetwork
+
+  cpuPerNode:
+    information:
+      - "the quantity of CPU given to each Kafka node"
+    type: [4..32]
+    default: 4
+
+  memoryPerNode:
+    information:
+      - "the quantity of RAM given to each Kafka node, in GB"
+    type: [8..256]
+    default: 12
+
+  diskPerNode:
+    information:
+      - "the quantity of storage given to each Kafka node, in GB"
+    type: [100..1000]
+    default: 100
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/logging/kafka-cluster
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 10.40.0.0
+
+  kafka-node:  # deploy as much horsepower as needed
+
+    description: "Kafka node"
+
+    information:
+      - "connect remotely:"
+      - "ssh ubuntu@{{ node.public }}"
+
+    appliance: 'Ubuntu 14'
+
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
+
+    disks:
+      - "1 {{ parameter.diskPerNode }} standard"
+
+    glue:
+      - internet icmp 22
+
+    monitoring: essentials
+
+  cloud-config:  # apply to all nodes
+
+    hostname: "{{ node.name }}"
+
+    write_files:
+
+      - path: /root/hosts.awk
+        content: |
+          #!/usr/bin/awk -f
+          /^{{ kafka1.private }}/ {next}
+          /^{{ kafka1.ipv6 }}/ {next}
+          /^{{ kafka2.private }}/ {next}
+          /^{{ kafka2.ipv6 }}/ {next}
+          /^{{ kafka3.private }}/ {next}
+          /^{{ kafka3.ipv6 }}/ {next}
+          {print}
+          END {
+           print "{{ kafka1.private }}    kafka1"
+           print "{{ kafka1.ipv6 }}    kafka1"
+           print "{{ kafka2.private }}    kafka2"
+           print "{{ kafka2.ipv6 }}    kafka2"
+           print "{{ kafka3.private }}    kafka3"
+           print "{{ kafka3.ipv6 }}    kafka3"
+          }
+
+      - path: /etc/profile.d/kafka.sh
+        permissions: "0755"
+        content: |
+            export PATH=$PATH:/opt/kafka/bin
+
+      - path: /root/zoo.cfg.addition
+        content: |
+          server.1={{ kafka1.private }}:2888:3888
+          server.2={{ kafka2.private }}:2888:3888
+          server.3={{ kafka3.private }}:2888:3888
+
+      - path: /etc/init/kafka.conf
+        permissions: "0644"
+        content: |
+          # kafka server
+
+          description  "Kafka Server"
+
+          start on filesystem runlevel [2345]
+          stop on runlevel [!2345]
+          respawn
+          respawn limit 10 5
+          umask 022
+
+          kill timeout 30
+
+          env RUN_AS_USER=root
+          env BASEDIR=/opt/kafka
+          env PIDFILE=/var/run/kafka/kafka.pid
+          env DAEMON=/opt/kafka/bin/kafka-server-start.sh
+          env CONFIGFILE=/opt/kafka/config/server.properties
+
+          pre-start script
+            test -x /opt/kafka/bin/kafka-server-start.sh || { stop; exit 0; }
+            test -c /dev/null || { stop; exit 0; }
+            mkdir -p -m0755 /var/log/kafka
+            chown $RUN_AS_USER /var/log/kafka
+            mkdir -p -m0755 /var/run/kafka
+          end script
+
+          script
+              /sbin/start-stop-daemon --start --make-pidfile --pidfile $PIDFILE --chuid $RUN_AS_USER --exec $DAEMON $CONFIGFILE  >> /var/log/kafka/kafka.log 2>&1
+          end script
+
+          pre-stop script
+            /sbin/start-stop-daemon --stop --pidfile $PIDFILE --exec $DAEMON $DAEMON  >> /var/log/kafka/kafka.log 2>&1
+          end script
+
+      - path: /root/edit_kafka_properties.sed
+        content: |
+          #!/usr/bin/sed
+          /delete.topic.enable/s|delete.topic.enable.*$|delete.topic.enable = true|
+
+    bootcmd:
+      - apt-get remove apache2 -y
+      - apt-get autoremove -y
+
+      # automate acceptance of oracle licence
+      - echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+      - echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 seen true" | sudo debconf-set-selections
+
+    apt_sources:
+      - source: "ppa:webupd8team/java"
+
+    packages:
+      - ntp
+      - oracle-java8-installer
+      - oracle-java8-set-default
+      - zookeeperd
+
+    runcmd:
+
+      - echo "===== Growing LVM with added disk"
+      - pvcreate /dev/sdb
+      - vgextend rootvol00 /dev/sdb
+      - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+      - resize2fs /dev/mapper/rootvol00-rootlvol00
+
+      - echo "===== Updating /etc/hosts"
+      - cp -n /etc/hosts /etc/hosts.original
+      - awk -f /root/hosts.awk /etc/hosts >/etc/hosts.new && mv /etc/hosts.new /etc/hosts
+      - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+      - echo "===== Handling ubuntu identity"
+      - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+      - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+
+      - echo "===== Checking Java"
+      - java -version
+
+      - echo "===== Configuring ZooKeeper"
+      - cp -n /etc/zookeeper/conf/zoo.cfg /etc/zookeeper/conf/zoo.cfg.orig
+      - cat /etc/zookeeper/conf/zoo.cfg.orig /root/zoo.cfg.addition >/etc/zookeeper/conf/zoo.cfg
+
+      - echo "===== Installing Kafka"
+      - cd /tmp/
+      - wget -nv http://apache.trisect.eu/kafka/0.10.0.0/kafka_2.11-0.10.0.0.tgz
+      - tar -xzf kafka_2.11-0.10.0.0.tgz
+      - mkdir -p /opt/kafka
+      - mv kafka_2.11-0.10.0.0/* /opt/kafka
+
+      - echo "===== Configuring Kafka"
+      - cd /opt/kafka
+      - cp -n config/server.properties config/server.properties.original
+      - sed -i -f /root/edit_kafka_properties.sed config/server.properties
+      - chown -R ubuntu:ubuntu /opt/kafka
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - kafka:
+
+      nodes:
+
+        - kafka1:
+            default: kafka-node
+
+            information:
+              - "test production on both topics 'hello ' and 'world':"
+              - "sh /home/ubuntu/test_kafka.sh"
+
+            cloud-config:
+
+              write_files:
+
+                - path: /home/ubuntu/test_kafka.sh
+                  permissions: "0755"
+                  content: |
+                    echo "Hello, World" | sudo /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic hello
+                    echo "Hello too" | sudo /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic world
+                    echo "Hello, again" | sudo /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic hello
+                    echo "Hello, it's still me" | sudo /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic hello
+                    echo "What about the Moon?" | sudo /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic world
+
+              runcmd:
+
+                - echo "===== Setting ZooKeeper id"
+                - echo "1" | cat >/var/lib/zookeeper/myid
+
+                - echo "===== Restarting ZooKeeper"
+                - service zookeeper restart
+
+                - echo "===== Checking ZooKeeper"
+                - echo ruok | nc localhost 2181
+                - echo srvr | nc localhost 2181
+
+                - echo "===== Setting broker id"
+                - sed -i "/broker.id/s|broker.id.*$|broker.id=1|" /opt/kafka/config/server.properties
+
+                - echo "===== Starting Kafka"
+                - service kafka start
+
+        - kafka2:
+            default: kafka-node
+
+            information:
+              - "test consumption from topic 'hello':"
+              - "kafka-console-consumer.sh --zookeeper localhost:2181 --topic hello --from-beginning"
+
+            cloud-config:
+
+              runcmd:
+
+                - echo "===== Setting ZooKeeper id"
+                - echo "2" | cat >/var/lib/zookeeper/myid
+
+                - echo "===== Restarting ZooKeeper"
+                - service zookeeper restart
+
+                - echo "===== Setting broker id"
+                - sed -i "/broker.id/s|broker.id.*$|broker.id=2|" /opt/kafka/config/server.properties
+
+                - echo "===== Starting Kafka"
+                - service kafka start
+
+        - kafka3:
+            default: kafka-node
+
+            information:
+              - "test consumption from topic 'world':"
+              - "kafka-console-consumer.sh --zookeeper localhost:2181 --topic world --from-beginning"
+
+            cloud-config:
+
+              runcmd:
+
+                - echo "===== Setting ZooKeeper id"
+                - echo "3" | cat >/var/lib/zookeeper/myid
+
+                - echo "===== Restarting ZooKeeper"
+                - service zookeeper restart
+
+                - echo "===== Setting Kafka broker id"
+                - sed -i "/broker.id/s|broker.id.*$|broker.id=3|" /opt/kafka/config/server.properties
+
+                - echo "===== Starting Kafka"
+                - service kafka start
+
