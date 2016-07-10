@@ -5,6 +5,13 @@ This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Pl
 
 ![Hadoop](hadoop.png)
 
+The [Apache Hadoop](https://hadoop.apache.org) software library is a framework that allows for the distributed processing
+of large data sets across clusters of computers using simple programming models.
+It is designed to scale up from single servers to thousands of machines, each offering local computation and storage.
+Rather than rely on hardware to deliver high-availability, the library itself is
+designed to detect and handle failures at the application layer, so delivering a highly-available
+service on top of a cluster of computers, each of which may be prone to failures.
+
 With this use case we prepare a ready-to-use HDFS and YARN stack. This is a single-node Hadoop installation
 so that you can quickly perform simple operations using Hadoop MapReduce and the Hadoop Distributed File System (HDFS).
 With the inclusion of YARN you can also submit other kinds of jobs, beyond MapReduce.

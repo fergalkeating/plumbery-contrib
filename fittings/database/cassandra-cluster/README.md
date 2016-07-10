@@ -5,6 +5,15 @@ This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Pl
 
 ![Cassandra](cassandra.png)
 
+[Cassandra](http://cassandra.apache.org) has become one of the most popular NoSQL databases
+used today by companies such as Netflix, Instagram, and many more.
+Originally designed at Facebook, Cassandra came from Amazon's highly available
+Dynamo and Google's BigTable data model. Cassandra is a highly available and
+decentralized database with tunable read and write consistency.
+All nodes communicate with each other through a Gossip protocol similar to
+Dynamo and Riak, exchanging information about themselves and other nodes they have gossiped with.
+Cassandra can also deploy multiple data centers acting as backups or to reduce latency across regions.
+
 With this use case we prepare a ready-to-use ring of 5 Cassandra nodes. Two of them are configured
 to seed the ring. The three others extend the ring, showing actual capability to scale out.
 

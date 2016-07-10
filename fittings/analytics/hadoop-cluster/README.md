@@ -5,6 +5,13 @@ This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Pl
 
 ![Hadoop](hadoop.png)
 
+The [Apache Hadoop](https://hadoop.apache.org) software library is a framework that allows for the distributed processing
+of large data sets across clusters of computers using simple programming models.
+It is designed to scale up from single servers to thousands of machines, each offering local computation and storage.
+Rather than rely on hardware to deliver high-availability, the library itself is
+designed to detect and handle failures at the application layer, so delivering a highly-available
+service on top of a cluster of computers, each of which may be prone to failures.
+
 With this use case we prepare a ready-to-use HDFS and YARN cluster with multiple nodes. The master is running
 the HDFS naming service and the YARN resource manager service. Other nodes store HDFS data and provide running containers to YARN.
 
@@ -38,7 +45,7 @@ the HDFS naming service and the YARN resource manager service. Other nodes store
 
     $ python -m plumbery fittings.yaml deploy
 
-This command will build fittings as per the provided plan, start the server
+This command will build fittings as per the provided plan, start the cluster
 and bootstrap it. Look at messages displayed by plumbery while it is
 working, so you can monitor what's happening.
 
