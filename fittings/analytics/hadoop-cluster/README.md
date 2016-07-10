@@ -1,23 +1,22 @@
-# Hadoop single node cluster
+# Hadoop cluster with 1 master and 3 nodes
 
-The objective of this use case is to deploy a complete Hadoop stack on a single node, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
+The objective of this use case is to deploy a complete Hadoop cluster, at the [Managed Cloud Platform from Dimension Data](http://cloud.dimensiondata.com/eu/en/).
 This is done with [plumbery](https://developer.dimensiondata.com/display/PLUM/Plumbery) and a template that is provided below.
 
 ![Hadoop](hadoop.png)
 
-With this use case we prepare a ready-to-use HDFS and YARN stack. This is a single-node Hadoop installation
-so that you can quickly perform simple operations using Hadoop MapReduce and the Hadoop Distributed File System (HDFS).
-With the inclusion of YARN you can also submit other kinds of jobs, beyond MapReduce.
+With this use case we prepare a ready-to-use HDFS and YARN cluster. The master is running
+the HDFS naming service and the YARN resource manager service. Other nodes store HDFS data and provide running containers to YARN.
 
 ## Requirements for this use case
 
 * Select a MCP location
 * Add a Network Domain
 * Add an Ethernet network
-* Deploy a large Ubuntu server
-* Provide enough CPU, RAM and disk to the node, as defined by parameters
-* Monitor this server in the real-time dashboard provided by Dimension Data
-* Assign a public IPv4 address
+* Deploy multiple Ubuntu servers
+* Provide enough CPU, RAM and disk to each node, as defined by parameters
+* Monitor nodes in the real-time dashboard provided by Dimension Data
+* Assign a public IPv4 address to each node
 * Add address translation to ensure end-to-end IP connectivity
 * Add firewall rule to accept TCP traffic for ssh and for web consoles
 * Expand system storage (LVM) with additional disk
@@ -50,7 +49,7 @@ at any time with the following command:
     $ python -m plumbery fittings.yaml information
 
 
-In this use case you can use the IPv4 assigned to the node for direct ssh
+In this use case you can use the IPv4 assigned to the master node for direct ssh
 connection.
 
     $ ssh ubuntu@<ipv4_here>
@@ -76,12 +75,12 @@ To test HDFS you can for example create a directory and copy some files:
 To test MapReduce you can run the script that is already provided. This will take
 some minutes to complete:
 
-    # /root/test_mapreduce.sh
+    # ./test_mapreduce.sh
 
 
 Same approach to test YARN:
 
-    # /root/test_yarn.sh
+    # ./test_yarn.sh
 
 
 Go with your preferred browser to the NamedNode HDFS web console,

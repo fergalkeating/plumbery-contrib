@@ -228,12 +228,6 @@ defaults:
                 <description>Execution framework</description>
             </property>
 
-#      - path: /opt/hadoop/etc/hadoop/slaves
-#        content: |
-#            node1
-#            node2
-#            node3
-
     bootcmd:
       - apt-get remove apache2 -y
       - apt-get autoremove -y
@@ -274,7 +268,6 @@ defaults:
       - tar -xzf hadoop-2.7.2.tar.gz
       - mkdir -p /opt/hadoop
       - cp -R hadoop-2.7.2/* /opt/hadoop
-      - chown -R ubuntu:ubuntu /opt/hadoop
 
       - echo "===== Checking Hadoop version"
       - hadoop version
@@ -292,6 +285,8 @@ defaults:
       - sed -e '/<configuration>/r /root/yarn-site.update' etc/hadoop/yarn-site.xml.original >etc/hadoop/yarn-site.xml
 
       - sed -e '/<configuration>/r /root/mapred-site.update' etc/hadoop/mapred-site.xml.template >etc/hadoop/mapred-site.xml
+
+      - chown -R ubuntu:ubuntu /opt/hadoop
 
     ssh_keys:
       rsa_private: |
