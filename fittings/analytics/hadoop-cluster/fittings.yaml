@@ -47,78 +47,114 @@ links:
 
 defaults:
 
-  # nodes are deployed in a single network domain
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
-  # nodes are deployed on a single VLAN
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.60.0.0
 
-  # settings for any Hadoop master node
   hadoop-master:
 
+    description: "Hadoop master node"
+
     information:
-      - "a Hadoop master node"
-      - "connect remotely with:"
-      - "$ ssh hadoop@{{ node.public }}"
+      - "NameNode HDFS web console:"
+      - "http://{{ node.public }}:50070"
+      - "ResourceManager YARN web console:"
+      - "http://{{ node.public }}:8088"
+      - "connect remotely:"
+      - "ssh ubuntu@{{ node.public }}"
 
     appliance: 'Ubuntu 14'
 
-    cpu: 8
-    memory: 32
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     disks:
-      - "1 100 standard"
+      - "1 {{ parameter.diskPerNode }} standard"
 
     glue:
-      - internet icmp 22
+      - internet icmp 22 8088 50070
 
     monitoring: essentials
 
     cloud-config:
 
+      write_files:
+
+        - path: /home/ubuntu/test_mapreduce.sh
+          permissions: "0755"
+          content: |
+              echo "===== Executing randomwriter example"
+              $HADOOP_PREFIX/bin/hadoop \
+                  jar $HADOOP_PREFIX/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar randomwriter out
+
+        - path: /home/ubuntu/test_yarn.sh
+          permissions: "0755"
+          content: |
+              echo "===== Running distributed shell with 2 containers and executing the script 'date'"
+              $HADOOP_PREFIX/bin/hadoop \
+                  jar $HADOOP_PREFIX/share/hadoop/yarn/hadoop-yarn-applications-distributedshell-2.7.2.jar \
+                  org.apache.hadoop.yarn.applications.distributedshell.Client \
+                  --jar $HADOOP_PREFIX/share/hadoop/yarn/hadoop-yarn-applications-distributedshell-2.7.2.jar \
+                  --shell_command date \
+                  --num_containers 2 \
+                  --master_memory 1024
+
       runcmd:
 
-        - echo "===== Preparing Hadoop naming space"
-        - mkdir -p /home/hadoop/hdfs
+        - echo "===== Preparing Hadoop data space"
+        - mkdir -p /var/hdfs/namenode
+        - chown -R ubuntu:ubuntu /var/hdfs
         - hdfs namenode -format
-        - chown -R hadoop:hadoop /home/hadoop
 
         - echo "===== Starting Hadoop NameNode"
-        - hadoop-daemon.sh --script hdfs start namenode
+        - hadoop-daemon.sh start namenode
 
         - echo "===== Starting Hadoop ResourceManager"
         - yarn-daemon.sh start resourcemanager
 
-        - echo "===== Starting Hadoop NodeManager"
-        - yarn-daemon.sh start nodemanager
-
-        - echo "===== Testing Hadoop"
+        - echo "===== Checking Hadoop services"
         - jps
 
         - echo "===== Checking HDFS status"
-        - sleep 5m
+        - sleep 1m
         - hdfs dfsadmin -report
+
+        - echo "===== Testing HDFS"
+        - hdfs dfs -ls /
+        - echo "Hello world" | cat >hello.txt
+        - hdfs dfs -mkdir /test
+        - hdfs dfs -copyFromLocal hello.txt /test
+        - hdfs dfs -copyFromLocal hello.txt /test/hello2.txt
+        - hdfs dfs -ls /test
 
         - echo "===== Checking YARN status"
         - yarn node -list
 
-  # settings for any Hadoop agent node
-  hadoop-agent:
+        - echo "===== Testing MapReduce"
+        - echo "you can run /home/ubuntu/test_mapreduce.sh"
+
+        - echo "===== Testing YARN"
+        - echo "you can run /home/ubuntu/test_yarn.sh"
+
+
+  hadoop-slave:  # deploy as much horsepower as needed
+
+    description: "Hadoop slave node"
 
     appliance: 'Ubuntu 14'
 
-    cpu: "{{ cpuPerNode.parameter }}"
-    memory: "{{ memoryPerNode.parameter }}"
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     disks:
-      - "1 {{ diskPerNode.parameter }} standard"
+      - "1 {{ parameter.diskPerNode }} standard"
 
     glue:
-      - internet 22
+      - internet icmp 22 8042
 
     monitoring: essentials
 
@@ -127,18 +163,20 @@ defaults:
       runcmd:
 
         - echo "===== Preparing Hadoop data space"
-        - mkdir -p /home/hadoop/hdfs
-        - hdfs namenode -format
-        - chown -R hadoop:hadoop /home/hadoop
+        - mkdir -p /var/hdfs/datanode
+        - chown -R ubuntu:ubuntu /var/hdfs
 
         - echo "===== Starting Hadoop DataNode"
-        - hadoop-daemon.sh --script hdfs start datanode
+        - hadoop-daemon.sh start datanode
 
-        - echo "===== Testing Hadoop"
+        - echo "===== Starting Hadoop NodeManager"
+        - yarn-daemon.sh start nodemanager
+
+        - echo "===== Checking Hadoop services"
         - jps
 
-  # directives that apply to all nodes
-  cloud-config:
+
+  cloud-config:  # apply to all nodes
 
     hostname: "{{ node.name }}"
 
@@ -148,50 +186,59 @@ defaults:
         content: |
           #!/usr/bin/awk -f
           /^{{ master1.private }}/ {next}
-          /^{{ node1.private }}/ {next}
-          /^{{ node2.private }}/ {next}
-          /^{{ node3.private }}/ {next}
+          /^{{ slave1.private }}/ {next}
+          /^{{ slave2.private }}/ {next}
+          /^{{ slave3.private }}/ {next}
           {print}
           END {
            print "{{ master1.private }}    master1"
-           print "{{ node1.private }}    node1"
-           print "{{ node2.private }}    node2"
-           print "{{ node3.private }}    node3"
+           print "{{ slave1.private }}    slave1"
+           print "{{ slave2.private }}    slave2"
+           print "{{ slave3.private }}    slave3"
           }
 
       - path: /etc/profile.d/hadoop.sh
+        permissions: "0755"
         content: |
             export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
-            export HADOOP_PREFIX=/home/hadoop/hadoop
+            export HADOOP_PREFIX=/opt/hadoop
             export HADOOP_CONF_DIR=$HADOOP_PREFIX/etc/hadoop
             export PATH=$PATH:$HADOOP_PREFIX/bin
             export PATH=$PATH:$HADOOP_PREFIX/sbin
+
+      - path: /etc/sudoers.d/hadoop_env
+        permissions: "0440"
+        content: |
+            Defaults  env_keep += "JAVA_HOME"
+            Defaults  env_keep += "HADOOP_PREFIX"
+            Defaults  env_keep += "HADOOP_CONF_DIR"
 
       - path: /root/core-site.update
         content: |
           <property>
               <name>fs.defaultFS</name>
-              <value>hdfs://{{ master1.private }}:9000</value>
+              <value>hdfs://{{ master1.private }}/</value>
+              <description>NameNode URI</description>
           </property>
 
       - path: /root/hdfs-site.update
         content: |
           <property>
               <name>dfs.namenode.name.dir</name>
-              <value>file:///home/hadoop/hdfs/</value>
-              <description>NameNode directory for namespace and transaction logs storage.</description>
+              <value>file:///var/hdfs/namenode</value>
+              <description>NameNode directory for namespace and transaction logs storage</description>
           </property>
 
           <property>
               <name>dfs.datanode.data.dir</name>
-              <value>file:///home/hadoop/hdfs/</value>
-              <description>DataNode directory for storing data chunks.</description>
+              <value>file:///var/hdfs/datanode</value>
+              <description>DataNode directory for storing data chunks</description>
           </property>
 
           <property>
               <name>dfs.replication</name>
               <value>3</value>
-              <description>Number of replication for each chunk.</description>
+              <description>Number of replication for each chunk</description>
           </property>
 
       - path: /root/yarn-site.update
@@ -205,7 +252,7 @@ defaults:
             <property>
               <name>yarn.nodemanager.aux-services</name>
               <value>mapreduce_shuffle</value>
-              <description>shuffle service for MapReduce</description>
+              <description>Shuffle service for MapReduce</description>
             </property>
 
       - path: /root/mapred-site.update
@@ -213,14 +260,18 @@ defaults:
             <property>
                 <name>mapreduce.framework.name</name>
                 <value>yarn</value>
-                <description>Execution framework.</description>
+                <description>Execution framework</description>
             </property>
 
-      - path: /home/hadoop/hadoop/etc/hadoop/slaves
+      - path: /opt/hadoop/etc/hadoop/masters
         content: |
-            node1
-            node2
-            node3
+            {{ master1.public }}
+
+      - path: /opt/hadoop/etc/hadoop/slaves
+        content: |
+            {{ slave1.public }}
+            {{ slave2.public }}
+            {{ slave3.public }}
 
     bootcmd:
       - apt-get remove apache2 -y
@@ -249,11 +300,6 @@ defaults:
       - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
       - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
 
-      - echo "===== Handling hadoop identity"
-      - cp -n /etc/ssh/ssh_host_rsa_key /home/hadoop/.ssh/id_rsa
-      - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/hadoop/.ssh/id_rsa.pub
-      - chown hadoop:hadoop /home/hadoop/.ssh/*
-
       - echo "===== Setting environment variables"
       - . /etc/profile.d/hadoop.sh
       - echo $PATH
@@ -265,35 +311,32 @@ defaults:
       - cd /tmp/
       - wget -q http://apache.trisect.eu/hadoop/common/hadoop-2.7.2/hadoop-2.7.2.tar.gz
       - tar -xzf hadoop-2.7.2.tar.gz
-      - cp -R hadoop-2.7.2/* /home/hadoop/hadoop
-      - chown -R hadoop:hadoop /home/hadoop
+      - mkdir -p /opt/hadoop
+      - mv hadoop-2.7.2/* /opt/hadoop
+
+      - echo "===== Checking Hadoop version"
+      - hadoop version
 
       - echo "===== Configuring Hadoop"
-      - cd /home/hadoop/hadoop
+      - cd /opt/hadoop
 
       - cp -n etc/hadoop/core-site.xml etc/hadoop/core-site.xml.original
-      - rm etc/hadoop/core-site.xml
-      - cp etc/hadoop/core-site.xml.original etc/hadoop/core-site.xml
-      - sed -i -e '/<configuration>/r /root/core-site.update' etc/hadoop/core-site.xml
+      - sed -e '/<configuration>/r /root/core-site.update' etc/hadoop/core-site.xml.original >etc/hadoop/core-site.xml
 
       - cp -n etc/hadoop/hdfs-site.xml etc/hadoop/hdfs-site.xml.original
-      - rm etc/hadoop/hdfs-site.xml
-      - cp etc/hadoop/hdfs-site.xml.original etc/hadoop/hdfs-site.xml
-      - sed -i -e '/<configuration>/r /root/hdfs-site.update' etc/hadoop/hdfs-site.xml
+      - sed -e '/<configuration>/r /root/hdfs-site.update' etc/hadoop/hdfs-site.xml.original >etc/hadoop/hdfs-site.xml
 
       - cp -n etc/hadoop/yarn-site.xml etc/hadoop/yarn-site.xml.original
-      - rm etc/hadoop/yarn-site.xml
-      - cp etc/hadoop/yarn-site.xml.original etc/hadoop/yarn-site.xml
-      - sed -i -e '/<configuration>/r /root/yarn-site.update' etc/hadoop/yarn-site.xml
+      - sed -e '/<configuration>/r /root/yarn-site.update' etc/hadoop/yarn-site.xml.original >etc/hadoop/yarn-site.xml
 
-      - rm etc/hadoop/mapred-site.xml
-      - cp etc/hadoop/mapred-site.xml.template etc/hadoop/mapred-site.xml
-      - sed -i -e '/<configuration>/r /root/mapred-site.update' etc/hadoop/mapred-site.xml
+      - sed -e '/<configuration>/r /root/mapred-site.update' etc/hadoop/mapred-site.xml.template >etc/hadoop/mapred-site.xml
+
+      - chown -R ubuntu:ubuntu /opt/hadoop
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -301,32 +344,24 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
-
-      - name: hadoop
-        sudo: 'ALL=(ALL) NOPASSWD:ALL'
-        ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
-  - masters:
+  - hadoop:
 
       nodes:
+
         - master1:
             default: hadoop-master
 
-  - agents:
-
-      nodes:
-        - node[1..3]:
-            default: hadoop-agent
+        - slave[1..3]:
+            default: hadoop-slave

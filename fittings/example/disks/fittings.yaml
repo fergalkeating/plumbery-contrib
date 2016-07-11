@@ -40,8 +40,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -49,31 +49,31 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - disks:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         ipv4: auto
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 10.0.0.0
 
       nodes:
 
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: '#demo #ubuntu'
 
@@ -94,6 +94,7 @@ blueprints:
             # manage disks of this node
             #
             disks:
+              - 0 20 standard
               - 1 100 standard
               - 2 200 standard
               - 3 30 highperformance
@@ -114,6 +115,7 @@ blueprints:
               write_files:
 
                 - path: /root/set_pdisk.sh
+                  permissions: '0750'
                   content: |
                     #!/usr/bin/env bash
                     if [ ! -b ${1}1 ]; then
@@ -133,7 +135,29 @@ blueprints:
                     fi
 
 
+                - path: /root/set_pdisk0.sh
+                  permissions: '0750'
+                  content: |
+                    #!/usr/bin/env bash
+                    if [ ! -b ${1}6 ]; then
+                    echo "===== Partioning ${1}"
+                    cat <<EOF | fdisk ${1}
+                    n
+                    p
+                    6
+
+
+                    t
+                    8e
+                    w
+                    EOF
+                    echo "===== Creating LVM physical disk ${1}6"
+                    pvcreate ${1}6
+                    fi
+
+
                 - path: /root/set_vdisk.sh
+                  permissions: '0750'
                   content: |
                     #!/usr/bin/env bash
                     if [ -z "$(blkid ${1})" ];
@@ -160,9 +184,16 @@ blueprints:
                 - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
                 - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
 
-                - echo "===== Installing scripts"
-                - chmod +x /root/set_pdisk.sh
-                - chmod +x /root/set_vdisk.sh
+#                - echo "===== Installing scripts"
+#                - chmod +x /root/set_pdisk.sh
+#                - chmod +x /root/set_vdisk.sh
+
+                - echo "===== Handling extended disk 0"
+                - /root/set_pdisk0.sh /dev/sda
+                - echo "===== Adding /dev/sda6 to standard storage"
+                - vgextend rootvol00 /dev/sda6
+                - lvextend -l +100%FREE /dev/mapper/rootvol00-rootlvol00
+                - resize2fs /dev/mapper/rootvol00-rootlvol00
 
                 - echo "===== Handling additional disk 1"
                 - /root/set_pdisk.sh /dev/sdb

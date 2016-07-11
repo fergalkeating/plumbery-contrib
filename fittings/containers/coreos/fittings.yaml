@@ -35,13 +35,13 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     description: "CoreOS nodes"
     service: essentials
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 192.168.20.0
 
   coreosNode:
@@ -99,8 +99,8 @@ defaults:
             #cloud-config
             # include one or more SSH public keys
             ssh_authorized_keys:
-              - "{{ key.rsa_public }}"
-              - "{{ local.rsa_public }}"
+              - "{{ rsa_public.key }}"
+              - "{{ rsa_public.local }}"
             coreos:
               etcd2:
                 # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
@@ -150,8 +150,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -159,19 +159,19 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - coreos:
       nodes:
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
             default: coreosNode

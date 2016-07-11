@@ -24,7 +24,7 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     description: "kit of multiple nodes using Microsoft Windows operating system"
     service: essentials
     ipv4: auto
@@ -112,7 +112,7 @@ defaults:
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 basement: external
 

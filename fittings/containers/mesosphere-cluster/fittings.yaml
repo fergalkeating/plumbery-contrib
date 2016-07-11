@@ -50,12 +50,12 @@ defaults:
 
   # nodes are deployed in a single network domain
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     ipv4: auto
 
   # nodes are deployed on a single VLAN
   ethernet:
-    name: "{{ networkName.parameter }}"
+    name: "{{ parameter.networkName }}"
     subnet: 10.0.0.0
 
   # settings for any Meso master node
@@ -139,11 +139,11 @@ defaults:
 
     appliance: 'CentOS 7'
 
-    cpu: "{{ cpuPerNode.parameter }}"
-    memory: "{{ memoryPerNode.parameter }}"
+    cpu: "{{ parameter.cpuPerNode }}"
+    memory: "{{ parameter.memoryPerNode }}"
 
     disks:
-      - "1 {{ diskPerNode.parameter }} standard"
+      - "1 {{ parameter.diskPerNode }} standard"
 
     glue:
       - internet 22
@@ -283,8 +283,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -292,15 +292,15 @@ defaults:
       - name: centos
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 

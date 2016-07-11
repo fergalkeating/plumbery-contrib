@@ -46,8 +46,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -55,39 +55,39 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - letschat:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 10.0.0.0
 
       nodes:
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: "#hubot #ubuntu"
 
             information:
-              - "engage with {{ botName.parameter }}:"
+              - "engage with {{ parameter.botName }}:"
               - "ssh ubuntu@{{ node.public }}"
-              - "cd {{ botName.parameter }}"
+              - "cd {{ parameter.botName }}"
               - "bin/hubot"
-              - "{{ botName.parameter }} help"
+              - "{{ parameter.botName }} help"
 
             appliance: 'Ubuntu 14'
             cpu: 2
@@ -173,10 +173,10 @@ blueprints:
                 - npm install -g yo generator-hubot
                 - mkdir -p /root/.config/configstore
                 - chmod g+rwx /root /root/.config /root/.config/configstore
-                - "mkdir {{ botName.parameter }}"
-                - "chown ubuntu:ubuntu /home/ubuntu/{{ botName.parameter }}"
-                - "cd {{ botName.parameter }}"
-                - su ubuntu -c "yo hubot --name={{ botName.parameter }} --adapter=shell --defaults"
+                - "mkdir {{ parameter.botName }}"
+                - "chown ubuntu:ubuntu /home/ubuntu/{{ parameter.botName }}"
+                - "cd {{ parameter.botName }}"
+                - su ubuntu -c "yo hubot --name={{ parameter.botName }} --adapter=shell --defaults"
                 - rm hubot-scripts.json
                 - npm uninstall hubot-heroku-keepalive --save
                 - sed -i "/hubot-heroku-keepalive/d" external-scripts.json
@@ -189,4 +189,4 @@ blueprints:
                 - node /root/update-export-external-scripts.js
 
                 - echo "===== Ready to play"
-                - echo "{{ botName.parameter }} can be started with bin/hubot"
+                - echo "{{ parameter.botName }} can be started with bin/hubot"

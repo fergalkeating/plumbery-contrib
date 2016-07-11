@@ -1,0 +1,132 @@
+---
+
+information:
+  - "Oracle Linux installed from ISO (experimental)"
+
+parameters:
+
+  locationId:
+    information:
+      - "the target data centre for this deployment"
+    type: locations.list
+    default: EU6
+
+  domainName:
+    information:
+      - "the name of the network domain to be deployed"
+    type: str
+    default: OracleFox
+
+  networkName:
+    information:
+      - "the name of the Ethernet VLAN to be deployed"
+    type: str
+    default: OracleNetwork
+
+  nodeName:
+    information:
+      - "the name of the node to be deployed"
+    type: str
+    default: oracle01
+
+links:
+  documentation: https://github.com/DimensionDataCBUSydney/plumbery-contrib/tree/master/fittings/example/oracle-iso
+
+defaults:
+
+  domain:
+    name: "{{ parameter.domainName }}"
+    service: essentials
+    ipv4: auto
+
+  ethernet:
+    name: "{{ parameter.networkName }}"
+    subnet: 192.168.20.0
+
+  oracle-node:
+
+    information:
+      - "to install Oracle Linux, go to the console and reboot the server"
+
+    appliance: 'Ubuntu 14'
+    cpu: 2
+    memory: 4
+
+    disks:
+      - 1 10 standard
+
+    glue:
+      - internet icmp 22 80 443
+
+    # upload the ISO to install oracle Linux
+    #
+    prepare:
+      - put V100086-01.iso
+
+    cloud-config:
+
+      packages:
+        - ntp
+
+      write_files:
+
+        - path: /root/grub_40_custom
+          content: |
+            menuentry "EFI Grub2" {
+                    insmod part_gpt
+                    insmod chain
+                    set root='(hd1)'
+                    chainloader +1
+            }
+
+      runcmd:
+
+        - echo "===== Handling ubuntu identity"
+        - cp -n /etc/ssh/ssh_host_rsa_key /home/ubuntu/.ssh/id_rsa
+        - cp -n /etc/ssh/ssh_host_rsa_key.pub /home/ubuntu/.ssh/id_rsa.pub
+        - chown ubuntu:ubuntu /home/ubuntu/.ssh/*
+        - sed -i "/StrictHostKeyChecking/s/^.*$/    StrictHostKeyChecking no/" /etc/ssh/ssh_config
+
+        - echo "===== Copying the ISO file to secondary hard drive"
+        - dd if=/root/V100086-01.iso of=/dev/sdb bs=1M
+
+        - echo "===== Updating bootloader"
+        - cp -n /etc/grub.d/40_custom /root/etc-grub.d-40_custom.orig
+        - cat /root/etc-grub.d-40_custom.orig /root/grub_40_custom >/etc/grub.d/40_custom
+        - sed -i "/GRUB_DEFAULT=/s/^.*$/GRUB_DEFAULT='EFI Grub2'/" /etc/default/grub
+        - update-grub
+
+  cloud-config:
+
+    ssh_keys:
+      rsa_private: |
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
+
+    users:
+      - default
+
+      - name: ubuntu
+        sudo: 'ALL=(ALL) NOPASSWD:ALL'
+        ssh-authorized-keys:
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
+
+    disable_root: true
+    ssh_pwauth: false
+
+---
+
+locationId: "{{ parameter.locationId }}"
+
+blueprints:
+
+  - experimental:
+
+      nodes:
+
+        - "{{ parameter.nodeName }}":
+            default: oracle-node
+
+
+

@@ -4,13 +4,19 @@
 
 - [First example with Ubuntu node](example/first)
 - [Multiple disks added with LVM](example/disks)
+- [Encryption of data disk with LUKS and LVM](example/encryption)
 - [Multiple network interfaces](example/networks)
 - [Kit of multiple Windows nodes](example/windows-kit)
 - [FreeBSD node installed from custom VMDK (experimental)](example/freebsd-vmdk)
 - [Debian network installation with iPXE and DNSMASQ (experimental)](example/debian-ipxe)
+- [Oracle Linux installed from ISO (experimental)](example/oracle-iso)
 - [Select your operating system installer with netboot.xyz and iPXE (experimental)](example/omniboot-ipxe)
 - [Ubuntu desktop](example/ubuntu-desktop)
 - [The master plan to conquer the world](example/gigafox)
+
+## Multicloud
+
+- [Multicloud example with nodes in AWS and Dimension Data Cloud](multicloud/aws-stack)
 
 ## Application services
 
@@ -36,16 +42,24 @@
 - [Docker node](containers/docker)
 - [Kubernetes node](containers/kubernetes)
 - [Docker Swarm](containers/docker-swarm)
+- [Juju cluster, with one client, one bootstrap, and three nodes](containers/juju-cluster)
 - [Mesosphere cluster with Docker, on 3 masters and 9 nodes](containers/mesosphere-cluster)
+
+## Analytics services
+
+- [Hadoop single node cluster](analytics/hadoop-node)
+- [Hadoop cluster with 1 master and 3 nodes](analytics/hadoop-cluster)
 
 ## Database services
 
 - [MySQL replication over IPv6 back-end network](database/mysql-master-slave)
 - [Cluster of Redis servers](database/redis-cluster)
 - [Cluster of MongoDB servers](database/mongodb-cluster)
+- [Cassandra ring with 5 nodes](database/cassandra-cluster)
 
 ## Logging services
 
+- [Kafka cluster with 3 nodes](logging/kafka-cluster)
 - [Centralised logging with Elasticsearch, Logstash, and Kibana](logging/elasticsearch-kibana-logstash)
 - [Multiple pingers connected to a MQTT broker and to a Kibana dashboard](logging/mqtt-swarm)
 
@@ -53,6 +67,7 @@
 
 - [Site-to-site IPsec tunnel with Openswan](networking/openswan)
 - [OpenVPN gateway](networking/openvpn)
+- [pfSense installed from ISO (experimental)](networking/pfsense-iso)
 
 ## Storage services
 
@@ -61,6 +76,7 @@
 - [NFS server and client over IPv6 back-end network](storage/nfs)
 - [Personal storage with ownCloud](storage/owncloud)
 - [Samba file sharing server](storage/samba)
+- [StorageGRID Webscale cluster of 4 nodes](storage/storagegrid)
 - [Standalone minio s3-compatible object server](storage/minio)
 
 ## Web services

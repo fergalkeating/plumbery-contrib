@@ -38,8 +38,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -47,31 +47,31 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - nodejs:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         service: essentials
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 192.168.20.0
 
       nodes:
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: "#nodejs #ubuntu"
 

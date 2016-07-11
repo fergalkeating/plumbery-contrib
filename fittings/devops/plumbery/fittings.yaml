@@ -9,7 +9,7 @@ parameters:
     information:
       - "the target data centre for this deployment"
     type: locations.list
-    default: EU7
+    default: EU8
 
   domainName:
     information:
@@ -38,8 +38,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -47,36 +47,36 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
       - name: root
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: false
     ssh_pwauth: true
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
   - beachhead:
 
       domain:
-        name: "{{ domainName.parameter }}"
+        name: "{{ parameter.domainName }}"
         ipv4: 2
 
       ethernet:
-        name: "{{ networkName.parameter }}"
+        name: "{{ parameter.networkName }}"
         subnet: 10.0.0.0
 
       nodes:
 
-        - "{{ nodeName.parameter }}":
+        - "{{ parameter.nodeName }}":
 
             description: '#plumbery #ops #ubuntu'
 
@@ -89,7 +89,7 @@ blueprints:
               - 1 50 standard
 
             glue:
-              - internet 22
+              - internet icmp 22
 
             monitoring: essentials
 

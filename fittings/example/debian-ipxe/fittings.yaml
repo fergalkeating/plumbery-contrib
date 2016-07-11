@@ -48,13 +48,13 @@ links:
 defaults:
 
   domain:
-    name: "{{ domainName.parameter }}"
+    name: "{{ parameter.domainName }}"
     service: essentials
     ipv4: auto
 
   ethernet:
-    name: "{{ networkName.parameter }}"
-    subnet: "{{ networkSubnet.parameter }}"
+    name: "{{ parameter.networkName }}"
+    subnet: "{{ parameter.networkSubnet }}"
 
   debianNode:
 
@@ -143,7 +143,7 @@ defaults:
         - path: /root/dnsmasq.sed
           content: |
             #!/usr/bin/sed
-            /#dhcp-range=192.168.0.50,192.168.0.150,12h/s/^.*$/dhcp-range={{ networkRange.parameter }},255.255.255.0,12h/
+            /#dhcp-range=192.168.0.50,192.168.0.150,12h/s/^.*$/dhcp-range={{ parameter.networkRange }},255.255.255.0,12h/
             /#dhcp-boot=pxelinux.0/s/^.*$/dhcp-boot=pxelinux.0/
             s|#enable-tftp|enable-tftp|
             s|#tftp-root=/var/ftpd|tftp-root=/var/tftp|
@@ -151,7 +151,7 @@ defaults:
             s|#dhcp-authoritative|dhcp-authoritative|
             s|#log-queries|log-queries|
             s|#log-dhcp|log-dhcp|
-            s|#dhcp-option=3,1.2.3.4|dhcp-option=3,{{ networkGateway.parameter }}|
+            s|#dhcp-option=3,1.2.3.4|dhcp-option=3,{{ parameter.networkGateway }}|
 
       runcmd:
 
@@ -190,8 +190,8 @@ defaults:
 
     ssh_keys:
       rsa_private: |
-        {{ key.rsa_private }}
-      rsa_public: "{{ key.rsa_public }}"
+        {{ rsa_private.key }}
+      rsa_public: "{{ rsa_public.key }}"
 
     users:
       - default
@@ -199,15 +199,15 @@ defaults:
       - name: ubuntu
         sudo: 'ALL=(ALL) NOPASSWD:ALL'
         ssh-authorized-keys:
-          - "{{ key.rsa_public }}"
-          - "{{ local.rsa_public }}"
+          - "{{ rsa_public.key }}"
+          - "{{ rsa_public.local }}"
 
     disable_root: true
     ssh_pwauth: false
 
 ---
 
-locationId: "{{ locationId.parameter }}"
+locationId: "{{ parameter.locationId }}"
 
 blueprints:
 
