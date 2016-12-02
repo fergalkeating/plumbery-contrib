@@ -10,19 +10,25 @@ parameters:
     information:
       - "the target data centre for this deployment"
     type: locations.list
-    default: AU10
+    default: EU8
+
+  regionId:
+    information:
+      - "the target data centre for this deployment"
+    type: regions.list
+    default: dd-eu
 
   domainName:
     information:
       - "the name of the network domain to be deployed"
     type: str
-    default: MesosphereClusterFox
+    default: MesosphereClusterFK
 
   networkName:
     information:
       - "the name of the Ethernet VLAN to be deployed"
     type: str
-    default: MesosphereClusterNetwork
+    default: MesosphereClusterNetworkFK
 
   cpuPerNode:
     information:
@@ -300,6 +306,8 @@ defaults:
 
 ---
 
+# London - EU MCP 1 instance
+regionId: "{{ parameter.regionId }}"
 locationId: "{{ parameter.locationId }}"
 
 blueprints:
